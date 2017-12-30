@@ -1,4 +1,4 @@
-# SHG FROG software for measuring n2 with bootstrap FROG error
+# SHG FROG software for measuring nonlinear refractive index
 
 This program when finished is supposed to get measured SHG FROG spectrogram as input and give n2 and n2 error as output.
 
