@@ -1,18 +1,18 @@
-function [IF, electricField] = makeFROG(Pulse)
+function [intensityFROG, electricFROG] = makeFROG(electricField)
 
-N = length(Pulse);
-electricField = Pulse*(Pulse.');
+N = length(electricField);
+electricFROG = electricField*(electricField.');
 	
 % row rotation
 for n=2:N
-	electricField(n,:) = circshift(electricField(n,:), [0 1-n]);
+	electricFROG(n,:) = circshift(electricFROG(n,:), [0 1-n]);
 end
 
 % permute the columns to the right order
-electricField=fliplr(fftshift(electricField,2));
+electricFROG=fliplr(fftshift(electricFROG,2));
 
 % FFT each column and put 0 frequency in the correct place:
-electricField=circshift(fft(electricField,[],1),ceil(N/2)-1);
+electricFROG=circshift(fft(electricFROG,[],1),ceil(N/2)-1);
 
 % generate FROG trace (= |field|^2)
-IF = abs(electricField).^2;
+intensityFROG = abs(electricFROG).^2;

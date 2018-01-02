@@ -1,4 +1,4 @@
-function outputPulse = makePulse(electricField,lastPulse,PowerOrSVD)
+function outputPulse = makePulse(electricField, lastPulse, whichMethod)
 
 N = size(electricField, 1);
 
@@ -18,7 +18,7 @@ end
 % Anti-alias in time domain. See makeFROG for explanation.
 electricField=electricField-tril(electricField,-ceil(N/2))-triu(electricField,ceil(N/2));
 
-if(PowerOrSVD==0) % Power method
+if (whichMethod == 0) % Power method
 	outputPulse=electricField*(electricField'*lastPulse);
 else % SVD method
 	[U, S, V] = svds(electricField,1);

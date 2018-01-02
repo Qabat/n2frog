@@ -2,31 +2,42 @@ clc;
 clear;
 close all;
 
-Pulse = dlmread('..\frog trace for test\result.txt');
-
+% prepare FROG trace from pulse retrieved by Femtosoft FROG
+Pulse = dlmread('..\testfrog\result.txt');
 Time = Pulse(:,1);
 Intensity = Pulse(:,2);
 Phase = Pulse(:,3);
-complexPulse = sqrt(Intensity).*exp(1i.*Phase);
+computedFROG = makeFROG(sqrt(Intensity).*exp(1i.*Phase));
 
-[computedFROG, EF] = makeFROG(complexPulse);
+% input parameters for FROG algorithm
+errorTolerance = 0.0000001;
+maxIterations = 100;
+deltaDelay = 6.515;
+whichMethod = 0;
+hidePlots = 0;
+useBootstrap = 0;
 
-% rekonstrukcja frogowa
-for i=1:1
-    % sprawdzic tu czy ja nie daje jako input do kolejknych algorytmow tego
-    % co poprzedni wyrzucil, to by wyjasnialo czemu nie widac wplywu
-    % bootstrapa
-    
-% startPulse can be switched for [] to use default pulse
-[Pt, Fr, G, iter] = mainFROG(computedFROG, 0.0000001, 100, 0, 6.515, 0);
+% main
+howMany = 1;
+for n=1:howMany
+   
+    [retrievedPulse, retrievedFROG, finalGError, finalIterations] = mainFROG(computedFROG, errorTolerance, maxIterations, deltaDelay, whichMethod, hidePlots, useBootstrap);
 
-recIntensity = abs(Pt.^2);
-recIntensity = recIntensity/max(recIntensity);
-recPhase = angle(Pt);
-%recPhase(recIntensity<0.1) = 0;
+    retrievedIntensity = abs(retrievedPulse).^2;
+    retrievedIntensity = retrievedIntensity/max(retrievedIntensity);
+    retrievedPhase = angle(retrievedPulse);
+    retrievedPhase(retrievedIntensity<0.1) = 0; % phase blanking
 
-outputFile = [Time, recIntensity, recPhase];
-method = 'svd';
-dlmwrite(['.\output_' method '\'  num2str(i)  '.txt'],outputFile,'\t');
+    outputFile = [Time, retrievedIntensity, retrievedPhase];
+    method = 'power';
+    dlmwrite(['.\output_' method '\' num2str(i) '.txt'],outputFile,'\t');
 
 end
+
+% compare retrieved pulses
+% for n=1:howMany
+%     file = dlmread(['.\output_' method '\' num2str(i) '.txt']);
+%     figure()
+%     plot(file(:,2))
+%     hold on
+% end
