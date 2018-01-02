@@ -4,7 +4,7 @@ This program when finished is supposed to get measured SHG FROG spectrogram as i
 
 Detailed functioning:
 - get Femtosoft FROG compatible SHG FROG spectrogram matrix as input
-- retrieval of the complex pulse through (principal component) generalized projections 
+- retrieval of the complex pulse through (principal component) generalized projections
 - computing FROG error with bootstrap method
 - fitting experimental data through Total Least Squares method including all possible sources of error
 - get n2 and its error as output
