@@ -12,5 +12,4 @@ In detail:
 - retrieve of the complex pulse through (principal component) generalized projections 
 - compute FROG error with bootstrap method
 - fit experimental data through Total Least Squares method including all possible sources of error
->>>>>>> f681d2c23ba0449f1969d1b88154d81cbffc4094
 - get n2 and its error as output
