@@ -7,7 +7,7 @@ Pulse = dlmread('..\testfrog\result.txt');
 Time = Pulse(:,1);
 Intensity = Pulse(:,2);
 Phase = Pulse(:,3);
-computedFROG = makeFROG(sqrt(Intensity).*exp(1i.*Phase));
+[computedFROG, electricFROG] = makeFROG(sqrt(Intensity).*exp(1i.*Phase));
 
 % input parameters for FROG algorithm
 errorTolerance = 0.0000001;
