@@ -11,7 +11,7 @@ Phase = Pulse(:,3);
 
 % input parameters for FROG algorithm
 errorTolerance = 0.000000001;
-maxIterations = 500;
+maxIterations = 300;
 deltaDelay = 6.515;
 whichMethod = 0;
 hidePlots = 0;
