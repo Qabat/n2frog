@@ -10,17 +10,17 @@ Phase = Pulse(:,3);
 [computedFROG, electricFROG] = makeFROG(sqrt(Intensity).*exp(1i.*Phase));
 
 % input parameters for FROG algorithm
-errorTolerance = 0.000000001;
-maxIterations = 300;
+errorTolerance = 8e-6;
+maxIterations = 500;
 deltaDelay = 6.515;
-whichMethod = 0;
+whichMethod = 1;
 hidePlots = 0;
 useBootstrap = 0;
 
 % main
 howMany = 1;
 for n=1:howMany
-   
+
     [retrievedPulse, retrievedFROG, finalGError, finalIterations] = mainFROG(computedFROG, errorTolerance, maxIterations, deltaDelay, whichMethod, hidePlots, useBootstrap);
 
     retrievedIntensity = abs(retrievedPulse).^2;
