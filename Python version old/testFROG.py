@@ -1,15 +1,13 @@
-from numpy import sqrt, exp, max, angle, savetxt, abs, loadtxt
+from numpy import sqrt, exp, max, angle, savetxt, abs
 import matplotlib.pyplot as plt
-from makeFROG import makeFROG
-from makePulse import makePulse
-from mainFROG import mainFROG
+
 
 # prepare FROG trace from pulse retrieved by Femtosoft FROG
-Pulse = loadtxt('result.txt')
+Pulse = load('..\testfrog\result.txt')
 Time = Pulse[:,0]
 Intensity = Pulse[:,1]
 Phase = Pulse[:,2]
-(computedFROG, electricFROG) = makeFROG(sqrt(Intensity)*exp(1j*Phase))
+(computedFROG, electricFROG) = makeFROG(sqrt(Intensity)*exp(mutiply(1j, Phase)))
 
 # input parameters for FROG algorithm
 errorTolerance = 8e-6
@@ -28,11 +26,11 @@ for n in range(1,howMany):
     retrievedIntensity = abs(retrievedPulse)**2
     retrievedIntensity = retrievedIntensity/max(retrievedIntensity)
     retrievedPhase = angle(retrievedPulse)
-    retrievedPhase[retrievedIntensity < 0.1] = 0 # phase blanking
+    retrievedPhase(retrievedIntensity < 0.1) = 0 # phase blanking
 
     outputFile = (Time, retrievedIntensity, retrievedPhase)
     method = 'power'
-    savetxt(f'.\output_ {method} \\ {i} .txt',outputFile,'\t')
+    savetxt(f'.\output_ {method} \\ {i} .txt'),outputFile,'\t')
 
 # compare retrieved pulses
 # for n in range(1,howMany):

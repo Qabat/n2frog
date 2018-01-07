@@ -1,4 +1,4 @@
-from numpy import roll, size, fliplr, tril, triu, conj
+from numpy import roll, size, fliplr, tril, triu, getH
 from numpy.fft import fft, ifft, ifftshift, fftshift
 from scipy.sparse.linalg import svds
 from numpy.linalg import norm
@@ -23,7 +23,7 @@ def makePulse(electricFROG, lastPulse, whichMethod):
     electricFROG = electricFROG - tril(electricFROG, -ceil(N/2)) - triu(electricFROG, ceil(N/2));
 
     #if (whichMethod == 0): # power method
-    outputPulse = electricFROG*(conj(electricFROG.T)*lastPulse)
+        outputPulse = electricFROG*(getH(electricFROG)*lastPulse)
     #else: # SVD method
     #    [U, S, V] = svds(electricFROG, 1)
     #    outputPulse = U[:,0]
@@ -31,4 +31,4 @@ def makePulse(electricFROG, lastPulse, whichMethod):
     # normalize to Euclidean norm 1
     outputPulse = outputPulse/norm(outputPulse)
 
-#return outputPulse
+return outputPulse

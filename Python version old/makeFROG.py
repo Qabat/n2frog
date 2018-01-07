@@ -6,12 +6,11 @@ def makeFROG(electricField):
     N = size(electricField)
 
     # outer product form
-    electricFROG = electricField@(electricField.T)
+    electricFROG = electricField@electricField.T
 
-    #electricFROG = electricFROG
     # row rotation
-    #for n in range(1,N):
-        #electricFROG[n,:] = roll(electricFROG[n,:], -n)
+    for n in range(1,N):
+        electricFROG[n,:] = roll(electricFROG[n,:], -n)
 
     # permute the columns to the right order
     electricFROG = fliplr(fftshift(electricFROG, 2))
