@@ -25,7 +25,8 @@ timeRange = [min(timeLabels) max(timeLabels)];
 freqRange = [min(freqLabels) max(freqLabels)];
 
 % generate initial guess
-initialIntensity = awgn(exp(-2*log(2)*(((0:N-1)'-N/2)/(N/10)).^2),30);
+%initialIntensity = awgn(exp(-2*log(2)*(((0:N-1)'-N/2)/(N/10)).^2),30);
+initialIntensity = exp(-2*log(2)*(((0:N-1)'-N/2)/(N/10)).^2); % no noise
 initialPhase = awgn(exp(0.1*2*pi*1i*rand(N,1)),10);
 retrievedPulse = initialIntensity.*initialPhase;
 [retrievedFROG, retrievedEFROG] = makeFROG(retrievedPulse);
@@ -42,13 +43,17 @@ end
 %   F R O G   I T E R A T I O N   A L G O R I T H M
 %   ------------------------------------------------------------
 
-mainFigure = figure('units','normalized','outerposition',[0 0 1 1]);
+mainFigure = figure('units','normalized','outerposition',[0.05 0.1 0.9 0.8]);
 finalIterations = 1;
 finalGError = 1e10;
+testError = 1e10;
 iterationVector = [];
 errorVector = [];
 
 while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
+    
+    % for debugging
+    %pause(1);
     
     % text output
     if hidePlots==1
@@ -71,11 +76,25 @@ while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
 	centerIndex = sum((1:N)'.*abs(retrievedPulse.^4))/sum(abs(retrievedPulse.^4));
 	retrievedPulse = circshift(retrievedPulse,-round(centerIndex-N/2));
     
-    % phase flip if n2 would come out negative
-    if (trapz(gradient(gradient(angle(retrievedPulse(N/2-20:N/2+20)))))>0)
-        retrievedPulse = abs(retrievedPulse).*exp(-1i*angle(retrievedPulse));
+    % keep zero phase at zero (only needed for svd frog, in power it
+    % somehow stays at zero by itself)
+    if (whichMethod == 1)
+        retrievedPulse = abs(retrievedPulse).*exp(1i*(angle(retrievedPulse) - angle(retrievedPulse(N/2))));
     end
     
+    % phase flip (and intensity flip) if n2 would come out negative
+    if ((trapz(gradient(gradient(angle(retrievedPulse(N/2-25:N/2+25)))))>0) && (finalGError < 1e-3))
+        retrievedPulse = flipud(abs(retrievedPulse)).*exp(-1i*flipud(angle(retrievedPulse)));
+    end
+    
+    % add perturbation to the pulse if the error is stagnating
+    if (mod(finalIterations,30) == 0)
+        testError = finalGError;
+    end
+    if ((abs(testError - finalGError) < testError/10) && (mod(finalIterations,30) == 29))
+       retrievedPulse = awgn(retrievedPulse,(50+finalIterations/10)); 
+    end
+
     % make a FROG trace from new fields
 	[retrievedFROG, retrievedEFROG] = makeFROG(retrievedPulse);
     
@@ -135,6 +154,6 @@ while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
 		if(strcmp(get(mainFigure,'CurrentCharacter'),'q'))
             close all;
             break;
-		end
+        end
     end
 end
