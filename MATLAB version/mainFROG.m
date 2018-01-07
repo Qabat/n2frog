@@ -76,11 +76,10 @@ while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
 	centerIndex = sum((1:N)'.*abs(retrievedPulse.^4))/sum(abs(retrievedPulse.^4));
 	retrievedPulse = circshift(retrievedPulse,-round(centerIndex-N/2));
     
-    % keep zero phase at zero (only needed for svd frog, in power it
-    % somehow stays at zero by itself)
-    if (whichMethod == 1)
-        retrievedPulse = abs(retrievedPulse).*exp(1i*(angle(retrievedPulse) - angle(retrievedPulse(N/2))));
-    end
+    % keep zero phase at zero (in power method its close to zero by itself)
+    %if (whichMethod == 1)
+    retrievedPulse = abs(retrievedPulse).*exp(1i*(angle(retrievedPulse) - angle(retrievedPulse(N/2))));
+    %end
     
     % phase flip (and intensity flip) if n2 would come out negative
     if ((trapz(gradient(gradient(angle(retrievedPulse(N/2-25:N/2+25)))))>0) && (finalGError < 1e-3))

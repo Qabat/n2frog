@@ -21,7 +21,12 @@ electricFROG=electricFROG-tril(electricFROG,-ceil(N/2))-triu(electricFROG,ceil(N
 if (whichMethod == 0) % Power method
 	outputPulse=electricFROG*(electricFROG'*lastPulse);
 else % SVD method
-	[U, S, V] = svds(electricFROG,1);
+	%[U, S, V] = svd(electricFROG,'econ');
+    [U, S, V] = svds(electricFROG,3);
+    % zmienilem na to wyzej bo moja macierz nie jest sparse chyba 
+    % i tak jak teraz jest powinno byc szybciej
+    % ale nie wiem co ten econ robi...
+    % ogarnac to lepiej!
 	outputPulse = U(:,1);
 end
 

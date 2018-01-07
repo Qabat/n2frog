@@ -2,7 +2,7 @@ function [intensityFROG, electricFROG] = makeFROG(electricField)
 
 N = length(electricField);
 electricFROG = electricField*(electricField.');
-	
+
 % row rotation
 for n=2:N
 	electricFROG(n,:) = circshift(electricFROG(n,:), [0 1-n]);
