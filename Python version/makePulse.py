@@ -1,4 +1,4 @@
-from numpy import roll, size, transpose, fliplr, square, tril, triu, getH
+from numpy import roll, size, fliplr, tril, triu, getH
 from numpy.fft import fft, ifft, ifftshift, fftshift
 from scipy.sparse.linalg import svds
 from numpy.linalg import norm

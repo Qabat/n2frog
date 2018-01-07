@@ -1,10 +1,12 @@
-from numpy import roll, size, transpose, fliplr, square
+from numpy import roll, size, fliplr, abs
 from numpy.fft import fft, ifft, ifftshift, fftshift
 
 def makeFROG(electricField):
 
     N = size(electricField)
-    electricFROG = electricField*transpose(electricField)
+
+    # outer product form
+    electricFROG = electricField@electricField.T
 
     # row rotation
     for n in range(1,N):
@@ -17,6 +19,6 @@ def makeFROG(electricField):
     electricFROG = roll(fft(electricFROG, axis=1), ceil(N/2)-1)
 
     # generate FROG trace (= |field|^2)
-    intensityFROG = square(abs(electricFROG))
+    intensityFROG = abs(electricFROG)**2
 
 return (intensityFROG, electricFROG)

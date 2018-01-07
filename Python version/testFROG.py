@@ -1,4 +1,4 @@
-from numpy import sqrt, exp, multiply, square amax, angle, savetxt
+from numpy import sqrt, exp, max, angle, savetxt, abs
 import matplotlib.pyplot as plt
 
 
@@ -7,7 +7,7 @@ Pulse = load('..\testfrog\result.txt')
 Time = Pulse[:,0]
 Intensity = Pulse[:,1]
 Phase = Pulse[:,2]
-(computedFROG, electricFROG) = makeFROG(multiply(sqrt(Intensity), exp(mutiply(1j, Phase))))
+(computedFROG, electricFROG) = makeFROG(sqrt(Intensity)*exp(mutiply(1j, Phase)))
 
 # input parameters for FROG algorithm
 errorTolerance = 8e-6
@@ -23,14 +23,14 @@ for n in range(1,howMany):
 
     (retrievedPulse, retrievedFROG, finalGError, finalIterations) = mainFROG(computedFROG, errorTolerance, maxIterations, deltaDelay, whichMethod, hidePlots, useBootstrap)
 
-    retrievedIntensity = square(abs(retrievedPulse))
-    retrievedIntensity = retrievedIntensity/amax(retrievedIntensity)
+    retrievedIntensity = abs(retrievedPulse)**2
+    retrievedIntensity = retrievedIntensity/max(retrievedIntensity)
     retrievedPhase = angle(retrievedPulse)
     retrievedPhase(retrievedIntensity < 0.1) = 0 # phase blanking
 
     outputFile = (Time, retrievedIntensity, retrievedPhase)
     method = 'power'
-    savetxt(('.\output_' method '\\' num2str(i) '.txt'),outputFile,'\t')
+    savetxt(f'.\output_ {method} \\ {i} .txt'),outputFile,'\t')
 
 # compare retrieved pulses
 # for n in range(1,howMany):
