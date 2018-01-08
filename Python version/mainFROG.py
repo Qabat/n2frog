@@ -25,8 +25,8 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
     deltaFreq = 1/(N*deltaDelay)
 
     # x axis labels and plot ranges
-    timeLabels = arange((-deltaDelay*(N-1)/2), (deltaDelay*(N-1)/2), deltaDelay).T
-    freqLabels = 1000*arange((-deltaFreq*(N-1)/2), (deltaFreq*(N-1)/2), deltaFreq).T
+    timeLabels = arange((-deltaDelay*(N-1)/2), (deltaDelay*((N-1)/2+1)), deltaDelay).T
+    freqLabels = 1000*arange((-deltaFreq*(N-1)/2), (deltaFreq*((N-1)/2+1)), deltaFreq).T
     timeRange = [min(timeLabels), max(timeLabels)]
     freqRange = [min(freqLabels), max(freqLabels)]
 
@@ -83,7 +83,7 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
             retrievedPulse = abs(retrievedPulse)*exp(1j*(angle(retrievedPulse) - angle(retrievedPulse(N/2))))
 
         # phase flip (and intensity flip) if n2 would come out negative
-        if ((trapz(diff(angle(retrievedPulse[arange(int(N/2)-25,int(N/2)+25)]),2))>0)-(finalGError < 1e-3)).any():
+        if ((trapz(diff(angle(retrievedPulse[arange(int(N/2)-25,int(N/2)+25)]),2))>0)-(finalGError < 1e-3)).all():
             retrievedPulse = flipud(abs(retrievedPulse))*exp(-1j*flipud(angle(retrievedPulse)))
 
         # add perturbation to the pulse if the error is stagnating
@@ -99,6 +99,7 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
         # calculate FROG error G, scale Fr to best match Fm, see DeLong1996,
         # and femtosoft error - intensity weighted
         retrievedFROG = retrievedFROG*alpha(originalFROG,retrievedFROG)
+        #TODO finalGError is wrong?
         finalGError = rmsdiff(originalFROG,retrievedFROG)
         weightedError = sum(sum((retrievedFROG-originalFROG)**2 * originalFROG))/sum(sum(originalFROG)) # check this
 
@@ -110,6 +111,7 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
         if (hidePlots == 0):
             #figure(mainFigure)
             #colormap('hot')
+            print(f'Iteration number: {finalIterations} Error: {finalGError}')
 
             # original FROG trace plot
             subplot(321)
