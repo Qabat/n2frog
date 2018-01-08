@@ -1,7 +1,5 @@
 from numpy import sqrt, exp, max, angle, savetxt, abs, loadtxt
-import matplotlib.pyplot as plt
 from makeFROG import makeFROG
-from makePulse import makePulse
 from mainFROG import mainFROG
 
 # prepare FROG trace from pulse retrieved by Femtosoft FROG
