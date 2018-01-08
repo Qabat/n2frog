@@ -31,4 +31,4 @@ def makePulse(electricFROG, lastPulse, whichMethod):
     # normalize to Euclidean norm 1
     outputPulse = outputPulse/norm(outputPulse)
 
-#return outputPulse
+    return outputPulse
