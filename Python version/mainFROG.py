@@ -1,8 +1,11 @@
-from numpy import size, mean, log, pi, zeros, max, sum, round, diff, trapz, flipud, arange
-from numpy.fft import fft, ifft, fftshift, ifftshift
+from numpy import size, mean, log, pi, zeros, max, sum, round, diff, trapz, flipud, arange, exp, angle, roll, sqrt
+from numpy.fft import fft, fftshift
 from numpy.random import normal, uniform, randint
 import numpy as np
 from matplotlib.pyplot import close, figure, subplot, plot, yscale, xscale, title, grid, draw, xlabel, ylabel, imshow
+from makeFROG import makeFROG
+from makePulse import makePulse
+
 
 def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMethod, hidePlots, useBootstrap):
 
@@ -28,7 +31,7 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
     freqRange = [min(freqLabels), max(freqLabels)]
 
     # generate initial guess
-    initialIntensity = exp(-2*log(2)*((arange(0,N-1).T-N/2)/(N/10))**2)
+    initialIntensity = exp(-2*log(2)*((arange(0,N).T-N/2)/(N/10))**2)
     initialPhase = exp(0.1*2*pi*1j*uniform(0,1,N)) + normal(0, 10)
     retrievedPulse = initialIntensity*initialPhase
     (retrievedFROG, retrievedEFROG) = makeFROG(retrievedPulse)
@@ -44,7 +47,6 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
 #   ------------------------------------------------------------
 
     close('all')
-    ion()
     mainFigure = figure(figsize=(1,1))
     finalIterations = 1
     finalGError = 1e10
@@ -68,12 +70,12 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
         else:
             retrievedEFROG = retrievedEFROG*(sqrt(originalFROG/retrievedFROG))
 
-	    # extract pulse field from FROG complex amplitude
+        # extract pulse field from FROG complex amplitude
         retrievedPulse = makePulse(retrievedEFROG, retrievedPulse, whichMethod)
 
-	    # use weighted average to keep peak centered at zero
-        centerIndex = sum((arange(1,N)).T*abs(retrievedPulse**4))/sum(abs(retrievedPulse**4))
-        retrievedPulse = circshift(retrievedPulse,-round(centerIndex-N/2))
+        # use weighted average to keep peak centered at zero
+        centerIndex = sum((arange(0, N)).T*abs(retrievedPulse**4))/sum(abs(retrievedPulse**4))
+        retrievedPulse = roll(retrievedPulse, int(-round(centerIndex-N/2)))
 
         # keep zero phase at zero (only needed for svd frog, in power it
         # somehow stays at zero by itself)
@@ -81,7 +83,7 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
             retrievedPulse = abs(retrievedPulse)*exp(1j*(angle(retrievedPulse) - angle(retrievedPulse(N/2))))
 
         # phase flip (and intensity flip) if n2 would come out negative
-        if ((trapz(diff(angle(retrievedPulse(arange(N/2-25,N/2+25))),2))>0) and (finalGError < 1e-3)):
+        if ((trapz(diff(angle(retrievedPulse[arange(int(N/2)-25,int(N/2)+25)]),2))>0)-(finalGError < 1e-3)).any():
             retrievedPulse = flipud(abs(retrievedPulse))*exp(-1j*flipud(angle(retrievedPulse)))
 
         # add perturbation to the pulse if the error is stagnating
@@ -94,8 +96,8 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
         # make a FROG trace from new fields
         (retrievedFROG, retrievedEFROG) = makeFROG(retrievedPulse)
 
-	    # calculate FROG error G, scale Fr to best match Fm, see DeLong1996,
-	    # and femtosoft error - intensity weighted
+        # calculate FROG error G, scale Fr to best match Fm, see DeLong1996,
+        # and femtosoft error - intensity weighted
         retrievedFROG = retrievedFROG*alpha(originalFROG,retrievedFROG)
         finalGError = rmsdiff(originalFROG,retrievedFROG)
         weightedError = sum(sum((retrievedFROG-originalFROG)**2 * originalFROG))/sum(sum(originalFROG)) # check this
@@ -115,7 +117,7 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
             title('Original FROG trace')
             xlabel('Delay [fs]')
             ylabel('Signal frequency [THz]')
-		    #ylim([-10 10])
+            #ylim([-10 10])
 
             # retrieved FROG trace plot
             subplot(323)
@@ -130,7 +132,7 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
             plot(timeLabels, 2*pi*abs(retrievedPulse)**2/max(abs(retrievedPulse))**2,timeLabels,angle(retrievedPulse)+pi)
             title('Reconstructed intensity and temporal phase')
             xlabel('Time [fs]')
-		    #axis([timeRange 0 6.5])
+            #axis([timeRange 0 6.5])
 
             # retrieved spectrum
             subplot(324)
@@ -138,13 +140,13 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
             plot(freqLabels, 2*pi*abs(FFTPt)**2/max(abs(FFTPt))**2,freqLabels,angle(FFTPt)+pi)
             title('Reconstructed spectrum and spectral phase')
             xlabel('Frequency [THz]')
-		    #axis([freqRange/5 0 6.5])
+            #axis([freqRange/5 0 6.5])
 
             # subplot(313) # frog error
             # plot(iterationVector, errorVector )
-		    # title('FROG error')
-		    # xlabel('Number of iterations')
-		    # #ylim auto
+            # title('FROG error')
+            # xlabel('Number of iterations')
+            # #ylim auto
             # set(gca, 'YScale', 'log')
 
             draw()
