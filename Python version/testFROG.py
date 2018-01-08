@@ -32,7 +32,7 @@ for n in range(1,howMany):
 
     outputFile = (Time, retrievedIntensity, retrievedPhase)
     method = 'power'
-    savetxt(f'.\output_ {method} \\ {i} .txt',outputFile,'\t')
+    savetxt(f'output_ {method} \\ {n} .txt', outputFile, '\t')
 
 # compare retrieved pulses
 # for n in range(1,howMany):
