@@ -1,4 +1,4 @@
-from numpy import roll, size, fliplr, tril, triu, conj
+from numpy import roll, size, fliplr, tril, triu, conj, ceil
 from numpy.fft import fft, ifft, ifftshift, fftshift
 from scipy.sparse.linalg import svds
 from numpy.linalg import norm
@@ -15,8 +15,8 @@ def makePulse(electricFROG, lastPulse, whichMethod):
     electricFROG = ifftshift(fliplr(electricFROG), 2)
 
     #Undo the lines: for n=2:N  EF(n,:) = circshift(EF(n,:), [0 1-n]);  end
-    for n in range(1,N):
-        electricFROG[n,:] = roll(electricFROG[n,:], n)
+    for n in range(1, N):
+        electricFROG[n, :] = roll(electricFROG[n, :], n)
 
     # Now EF is the "outer product form", see Kane1999.
     # Anti-alias in time domain. See makeFROG for explanation.

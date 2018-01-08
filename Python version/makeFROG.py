@@ -1,4 +1,4 @@
-from numpy import roll, size, fliplr, abs
+from numpy import roll, size, fliplr, abs, ceil
 from numpy.fft import fft, ifft, ifftshift, fftshift
 
 def makeFROG(electricField):
@@ -6,12 +6,11 @@ def makeFROG(electricField):
     N = size(electricField)
 
     # outer product form
-    electricFROG = electricField@(electricField.T)
+    electricFROG = electricField@electricField.T
 
-    #electricFROG = electricFROG
     # row rotation
-    #for n in range(1,N):
-        #electricFROG[n,:] = roll(electricFROG[n,:], -n)
+    for n in range(1,N):
+        electricFROG[n, :] = roll(electricFROG[n, :], -n)
 
     # permute the columns to the right order
     electricFROG = fliplr(fftshift(electricFROG, 2))
