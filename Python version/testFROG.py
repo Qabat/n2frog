@@ -1,12 +1,12 @@
-from numpy import sqrt, exp, max, angle, savetxt, abs, loadtxt
+from numpy import max, angle, savetxt, abs, exp, sqrt, loadtxt
 from makeFROG import makeFROG
 from mainFROG import mainFROG
 
 # prepare FROG trace from pulse retrieved by Femtosoft FROG
 Pulse = loadtxt('result.txt')
-Time = Pulse[:,0]
-Intensity = Pulse[:,1]
-Phase = Pulse[:,2]
+Time = Pulse[:, 0]
+Intensity = Pulse[:, 1]
+Phase = Pulse[:, 2]
 (computedFROG, electricFROG) = makeFROG(sqrt(Intensity)*exp(1j*Phase))
 
 # input parameters for FROG algorithm
@@ -14,12 +14,12 @@ errorTolerance = 8e-6
 maxIterations = 500
 deltaDelay = 6.515
 whichMethod = 0
-hidePlots = 0
+hidePlots = 1
 useBootstrap = 0
 
 # main
 howMany = 1
-for n in range(1,howMany):
+for n in range(0,howMany):
 
     (retrievedPulse, retrievedFROG, finalGError, finalIterations) = mainFROG(computedFROG, errorTolerance, maxIterations, deltaDelay, whichMethod, hidePlots, useBootstrap)
 

@@ -31,7 +31,7 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
     freqRange = [min(freqLabels), max(freqLabels)]
 
     # generate initial guess
-    initialIntensity = exp(-2*log(2)*((arange(0,N-1).T-N/2)/(N/10))**2)
+    initialIntensity = exp(-2*log(2)*((arange(0,N).T-N/2)/(N/10))**2)
     initialPhase = exp(0.1*2*pi*1j*uniform(0,1,N)) + normal(0, 10)
     retrievedPulse = initialIntensity*initialPhase
     (retrievedFROG, retrievedEFROG) = makeFROG(retrievedPulse)
@@ -74,8 +74,8 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
         retrievedPulse = makePulse(retrievedEFROG, retrievedPulse, whichMethod)
 
         # use weighted average to keep peak centered at zero
-        centerIndex = sum((arange(1, N)).T*abs(retrievedPulse**4))/sum(abs(retrievedPulse**4))
-        retrievedPulse = roll(retrievedPulse, -round(centerIndex-N/2))
+        centerIndex = sum((arange(0, N)).T*abs(retrievedPulse**4))/sum(abs(retrievedPulse**4))
+        retrievedPulse = roll(retrievedPulse, int(-round(centerIndex-N/2)))
 
         # keep zero phase at zero (only needed for svd frog, in power it
         # somehow stays at zero by itself)
@@ -83,7 +83,7 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
             retrievedPulse = abs(retrievedPulse)*exp(1j*(angle(retrievedPulse) - angle(retrievedPulse(N/2))))
 
         # phase flip (and intensity flip) if n2 would come out negative
-        if ((trapz(diff(angle(retrievedPulse(arange(N/2-25,N/2+25))),2))>0) and (finalGError < 1e-3)):
+        if ((trapz(diff(angle(retrievedPulse[arange(int(N/2)-25,int(N/2)+25)]),2))>0)-(finalGError < 1e-3)).any():
             retrievedPulse = flipud(abs(retrievedPulse))*exp(-1j*flipud(angle(retrievedPulse)))
 
         # add perturbation to the pulse if the error is stagnating
@@ -97,7 +97,7 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
         (retrievedFROG, retrievedEFROG) = makeFROG(retrievedPulse)
 
         # calculate FROG error G, scale Fr to best match Fm, see DeLong1996,
-	    # and femtosoft error - intensity weighted
+        # and femtosoft error - intensity weighted
         retrievedFROG = retrievedFROG*alpha(originalFROG,retrievedFROG)
         finalGError = rmsdiff(originalFROG,retrievedFROG)
         weightedError = sum(sum((retrievedFROG-originalFROG)**2 * originalFROG))/sum(sum(originalFROG)) # check this
@@ -144,9 +144,9 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
 
             # subplot(313) # frog error
             # plot(iterationVector, errorVector )
-		    # title('FROG error')
-		    # xlabel('Number of iterations')
-		    # #ylim auto
+            # title('FROG error')
+            # xlabel('Number of iterations')
+            # #ylim auto
             # set(gca, 'YScale', 'log')
 
             draw()
