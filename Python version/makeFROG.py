@@ -22,4 +22,4 @@ def makeFROG(electricField):
     # generate FROG trace (= |field|^2)
     intensityFROG = abs(electricFROG)**2
 
-return (intensityFROG, electricFROG)
+    return (intensityFROG, electricFROG)

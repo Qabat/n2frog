@@ -150,4 +150,4 @@ def mainFROG(originalFROG, errorTolerance, maxIterations, deltaDelay, whichMetho
             draw()
             finalIterations = finalIterations + 1
 
-#return (retrievedPulse, retrievedFROG, finalGError, finalIterations)
+            return (retrievedPulse, retrievedFROG, finalGError, finalIterations)
