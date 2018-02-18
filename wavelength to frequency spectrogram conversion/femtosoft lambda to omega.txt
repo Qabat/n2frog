@@ -1,0 +1,36 @@
+procedure TReadIn.GridSpectrum(pSource, pDest: TSpectrum);
+var
+  lam, f0s, f0d, wp, Lam0, r, scaler, delT, f: double;
+  w, N, N2: integer;
+begin
+  N := pDest.N;
+  N2 := N div 2;
+  f0d := 300.0/pDest.Lam0;
+  f0s := 300.0/pSource.Lam0;
+  r := pDest.DelF/pSource.DelF;
+  Lam0 := pDest.Lam0;
+
+  // We need to put the data on the proper FFT spacing.
+  // Use this on a spectrum read in with LoadSpectrum, it reads in as a
+  //   constant wavelength.
+  for w := 0 to N - 1 do
+  begin
+
+    // This is the lambda that corresponds to the mFFTData points
+    f := (w - N2)*pDest.DelF + f0d;
+    if (f <> 0 ) then lam := 300.0/f else lam := 1e10;
+
+    // Now figure out where that corresponds in the source data
+    // Source data is constant wavelength!
+    //wp := (f - f0s)/pSource.DelF + (pSource.N div 2);
+    wp := (lam - pSource.Lam0)/pSource.DelLam + (pSource.N div 2);
+
+    // This next line converts from I(lam) to I(f)
+    scaler := (lam/Lam0)*(lam/Lam0);
+
+    if (wp < 0) or (wp >= pSource.N - 1) then
+      pDest.Intensity^[w] := 0
+    else
+      pDest.Intensity^[w] := scaler*Window(wp, r, pSource.Intensity, pSource.N);
+  end;
+end;

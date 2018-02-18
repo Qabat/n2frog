@@ -113,18 +113,18 @@ while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
         colormap('hot');
         
         subplot(3,2,1) % original FROG trace plot
-        image([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], sqrt(originalFROG)*64); %64 is colormap range, sqrt for electric field
+        image([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], originalFROG*64); %64 is colormap range, (SQRT had to be removed) SQRT for electric field
         title('Original FROG trace');
         xlabel('Delay [fs]');
         ylabel('Signal frequency [THz]');
-		ylim([-10 10]);
+		ylim([-20 20]);
         
 		subplot(3,2,3) % retrieved FROG trace plot
-		image([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], sqrt(retrievedFROG)*64);
+		image([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], retrievedFROG*64);
 		title(['Reconstructed FROG trace: iterations=' num2str(finalIterations) ' Femtosoft error=' num2str(finalGError)]);
 		xlabel('Delay [fs]');
 		ylabel('Signal frequency [THz]');
-        ylim([-10 10]);
+        ylim([-20 20]);
         
 		subplot(3,2,2) % retrived temporal profile
 		plot(timeLabels, 2*pi*abs(retrievedPulse).^2/max(abs(retrievedPulse))^2,timeLabels,angle(retrievedPulse)+pi);

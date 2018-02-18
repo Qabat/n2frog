@@ -10,8 +10,8 @@ Phase = Pulse(:,3);
 experimentalFROG = makeFROG(sqrt(Intensity).*exp(1i.*Phase));
 
 % read measured pulse from file
-% experimentalFROG2 = dlmread('..\testfrog\60.txt');
-% [experimentalFROG2, lenDelay, lenOmega, delDelay, delOmega, centOmega] = interpFROG(experimentalFROG2);
+experimentalFROG2 = dlmread('..\testfrog\60.txt');
+[experimentalFROG3, lenDelay, lenOmega, delDelay, delOmega, centOmega] = interpFROG(experimentalFROG2);
 
 % input parameters for FROG algorithm
 errorTolerance = 8e-6;

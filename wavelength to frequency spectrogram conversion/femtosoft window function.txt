@@ -1,0 +1,28 @@
+function TReadIn.Window(wp, r: double; pSource: PArray; pN: integer): double;
+var
+  i, start, stop: integer;
+  hw, sum, csum, height: double;
+begin
+	hw := Abs(r)/2.0;
+	if (hw <= 1.0) then hw := 0.9999;  // See RawData.Window
+
+	sum := 0.0;
+	csum := 0.0;
+	start := 1 + Trunc(wp - hw);
+	stop := Trunc(wp + hw);
+	if(start > stop) then stop := start;
+	for i := start to stop do
+  begin
+		if (i >= 0) and (i < pN) then
+    begin
+			height := 1.0 - Abs(i - wp)/hw;
+			if (height < 0.0) then Continue;
+			sum := sum + height*pSource^[i];
+			csum := csum + height;
+		end;
+	end;
+
+	//if(sum < 0.0) then sum := 0.0;    // No negative FROG pixels
+	if (csum = 0.0) then csum := 1.0;
+	Window := (sum/csum);
+end;
