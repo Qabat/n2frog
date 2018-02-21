@@ -15,7 +15,7 @@ N = size(originalFROG, 1);
 % normalize FROG trace to unity max intensity
 originalFROG = normalize(originalFROG);
 
-% frequency interval per pixel
+% frequency interval per pixel JA CHCE TO MIEC W CZESTOSCIACH CZY 2PI*CZESTOSCIACH ???
 deltaFreq = 1/(N*deltaDelay);
 
 % x axis labels and plot ranges

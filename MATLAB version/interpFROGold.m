@@ -10,9 +10,8 @@ function [omegaFROG, lenDelay, lenOmega, delDelay, delOmega, centOmega] = interp
     
     lambdaFROG(1:5,:) = [];
     omegaFROG = lambdaFROG;
-%     
 
-    vectLambda = (centLambda-delLambda*lenLambda/2):delLambda:(centLambda+delLambda*(lenLambda/2-1)); % upewniæ siê tutaj czy srodek jest na 127 czy 128 pozycji
+    vectLambda = (centLambda-delLambda*lenLambda/2):delLambda:(centLambda+delLambda*(lenLambda/2-1));
     delOmegaVector = 2*pi*c*delLambda./vectLambda(1:end-1).^2;
 
 	iter = 1;
@@ -33,14 +32,12 @@ function [omegaFROG, lenDelay, lenOmega, delDelay, delOmega, centOmega] = interp
 %     A = sum(lambdaFROG(:,100).*vectLambda')
 %     B = sum(omegaFROG(:,100).*vectOmega')
     
-    newDeltaOmega = (vectOmega(end) - vectOmega(1)) / 255;
-    omegaFROG = interp1(vectOmega, omegaFROG, vectOmega(1):newDeltaOmega:vectOmega(end),'spline');
+    delOmega = (vectOmega(end) - vectOmega(1)) / 255;
+    omegaFROG = interp1(vectOmega, omegaFROG, vectOmega(1):delOmega:vectOmega(end),'spline');
     
     omegaFROG = normalize(omegaFROG);    
     lenOmega = length(vectOmega);
-    delOmega = newDeltaOmega;
+    centOmega = 2*pi*c / centLambda;
 %     firstOmega = vectOmega(1);
-    centOmega = 2*pi*c / centLambda; % centOmega has units of rad/fs
-
 end
 

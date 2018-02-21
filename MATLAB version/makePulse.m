@@ -16,7 +16,7 @@ end
 
 % Now EF is the "outer product form", see Kane1999.
 % Anti-alias in time domain. See makeFROG for explanation.
-electricFROG=electricFROG-tril(electricFROG,-ceil(N/2))-triu(electricFROG,ceil(N/2));
+% electricFROG=electricFROG-tril(electricFROG,-ceil(N/2))-triu(electricFROG,ceil(N/2));
 
 if (whichMethod == 0) % Power method
 	outputPulse=electricFROG*(electricFROG'*lastPulse);
@@ -26,7 +26,6 @@ else % SVD method
     % zmienilem na to wyzej bo moja macierz nie jest sparse chyba 
     % i tak jak teraz jest powinno byc szybciej
     % ale nie wiem co ten econ robi...
-    % ogarnac to lepiej!
 	outputPulse = U(:,1);
 end
 
