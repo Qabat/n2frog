@@ -27,7 +27,7 @@ def makePulse(electricFROG, lastPulse, whichMethod):
     #outputPulse = lastPulse*(electricFROG@conj(electricFROG.T))
     #tempouter = outer(electricFROG, electricFROG)
     #TODO MEMORY ERROR
-    outputPulse = dot(outer(electricFROG, conj(electricFROG)),lastPulse)
+    outputPulse = electricFROG@(conj(electricFROG.T)@lastPulse)
     #else: # SVD method
     #    [U, S, V] = svds(electricFROG, 1)
     #    outputPulse = U[:,0]

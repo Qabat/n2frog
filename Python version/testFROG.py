@@ -10,27 +10,27 @@ Phase = Pulse[:, 2]
 (computedFROG, electricFROG) = makeFROG(sqrt(Intensity)*exp(1j*Phase))
 
 # input parameters for FROG algorithm
-errorTolerance = 8e-6
+errorTolerance = 0.0001
 maxIterations = 500
 deltaDelay = 6.515
 whichMethod = 0
-hidePlots = 1
+hidePlots = 0
 useBootstrap = 0
 
 # main
-howMany = 1
-for n in range(0,howMany):
+#howMany = 3
+#for n in range(0, howMany):
 
-    (retrievedPulse, retrievedFROG, finalGError, finalIterations) = mainFROG(computedFROG, errorTolerance, maxIterations, deltaDelay, whichMethod, hidePlots, useBootstrap)
+(retrievedPulse, retrievedFROG, finalGError, finalIterations) = mainFROG(computedFROG, errorTolerance, maxIterations, deltaDelay, whichMethod, hidePlots, useBootstrap)
 
-    retrievedIntensity = abs(retrievedPulse)**2
-    retrievedIntensity = retrievedIntensity/max(retrievedIntensity)
-    retrievedPhase = angle(retrievedPulse)
-    retrievedPhase[retrievedIntensity < 0.1] = 0 # phase blanking
+retrievedIntensity = abs(retrievedPulse)**2
+retrievedIntensity = retrievedIntensity/max(retrievedIntensity)
+retrievedPhase = angle(retrievedPulse)
+retrievedPhase[retrievedIntensity < 0.1] = 0 # phase blanking
 
-    outputFile = (Time, retrievedIntensity, retrievedPhase)
-    method = 'power'
-    savetxt(f'output_ {method} \\ {n} .txt',outputFile,'\t')
+#outputFile = (Time, retrievedIntensity, retrievedPhase)
+#method = 'power'
+#savetxt(f'output_ {method} \\ {n} .txt',outputFile,'\t')
 
 # compare retrieved pulses
 # for n in range(1,howMany):

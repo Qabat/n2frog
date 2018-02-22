@@ -6,13 +6,9 @@ def makeFROG(electricField):
 
     N = size(electricField)
 
-    print(electricField)
-
     # outer product form
     #TODO MEMORY ERROR
     electricFROG = outer(electricField, electricField)
-
-    print(electricFROG)
 
     # row rotation
     for n in range(1, N):

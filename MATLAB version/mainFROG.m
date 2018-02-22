@@ -16,7 +16,7 @@ N = size(originalFROG, 1);
 originalFROG = normalize(originalFROG);
 
 % frequency interval per pixel
-deltaFreq = 1/(N*deltaDelay);
+deltaFreq = 2*pi/(N*deltaDelay);
 
 % x axis labels and plot ranges
 timeLabels = (-deltaDelay*(N-1)/2:deltaDelay:deltaDelay*(N-1)/2)';
@@ -27,8 +27,8 @@ freqRange = [min(freqLabels) max(freqLabels)];
 % generate initial guess
 %initialIntensity = awgn(exp(-2*log(2)*(((0:N-1)'-N/2)/(N/10)).^2),30);
 initialIntensity = exp(-2*log(2)*(((0:N-1)'-N/2)/(N/10)).^2); % no noise
-initialPhase = awgn(exp(0.1*2*pi*1i*rand(N,1)),10);
-retrievedPulse = initialIntensity.*initialPhase;
+initialPhase = 0.1*2*pi*rand(N,1);
+retrievedPulse = initialIntensity.*exp(1i.*initialPhase);
 [retrievedFROG, retrievedEFROG] = makeFROG(retrievedPulse);
 
 % prepare bootstrap mask if bootstrap is to be used
@@ -43,7 +43,7 @@ end
 %   F R O G   I T E R A T I O N   A L G O R I T H M
 %   ------------------------------------------------------------
 
-mainFigure = figure('units','normalized','outerposition',[0.05 0.1 0.9 0.8]);
+mainFigure = figure('units','normalized','outerposition',[0.2 0.1 0.6 0.8]);
 finalIterations = 1;
 finalGError = 1e10;
 testError = 1e10;
@@ -91,7 +91,7 @@ while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
         testError = finalGError;
     end
     if ((abs(testError - finalGError) < testError/10) && (mod(finalIterations,30) == 29))
-       retrievedPulse = awgn(retrievedPulse,(50+finalIterations/10)); 
+       retrievedPulse = awgn(retrievedPulse,(50+finalIterations/10));
     end
 
     % make a FROG trace from new fields
@@ -113,18 +113,18 @@ while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
         colormap('hot');
         
         subplot(3,2,1) % original FROG trace plot
-        image([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], sqrt(originalFROG)*64); %64 is colormap range, sqrt for electric field
+        image([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], sqrt(abs(originalFROG))*64); %64 is colormap range, (SQRT had to be removed) SQRT for electric field
         title('Original FROG trace');
         xlabel('Delay [fs]');
         ylabel('Signal frequency [THz]');
-		ylim([-10 10]);
+		ylim([-100 100]);
         
 		subplot(3,2,3) % retrieved FROG trace plot
-		image([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], sqrt(retrievedFROG)*64);
+		image([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], sqrt(abs(retrievedFROG))*64);
 		title(['Reconstructed FROG trace: iterations=' num2str(finalIterations) ' Femtosoft error=' num2str(finalGError)]);
 		xlabel('Delay [fs]');
 		ylabel('Signal frequency [THz]');
-        ylim([-10 10]);
+        ylim([-100 100]);
         
 		subplot(3,2,2) % retrived temporal profile
 		plot(timeLabels, 2*pi*abs(retrievedPulse).^2/max(abs(retrievedPulse))^2,timeLabels,angle(retrievedPulse)+pi);

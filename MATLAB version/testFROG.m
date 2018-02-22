@@ -3,16 +3,21 @@ clear;
 close all;
 
 % prepare FROG trace from pulse retrieved by Femtosoft FROG
-Pulse = dlmread('..\testfrog\result.txt');
-Time = Pulse(:,1);
-Intensity = Pulse(:,2);
-Phase = Pulse(:,3);
-[computedFROG, electricFROG] = makeFROG(sqrt(Intensity).*exp(1i.*Phase));
+% Pulse = dlmread('..\testfrog\result.txt');
+% Time = Pulse(:,1);
+% Intensity = Pulse(:,2);
+% Phase = Pulse(:,3);
+% experimentalFROG = makeFROG(sqrt(Intensity).*exp(1i.*Phase));
+
+% read measured pulse from file
+experimentalFROG = dlmread('..\testfrog\60.txt');
+N = 256;
+[experimentalFROG, deltaDelay, deltaOmega] = interpFROG(experimentalFROG, N);
 
 % input parameters for FROG algorithm
 errorTolerance = 8e-6;
 maxIterations = 500;
-deltaDelay = 6.515;
+% deltaDelay = 6.515;
 whichMethod = 0;
 hidePlots = 0;
 useBootstrap = 0;
@@ -21,7 +26,7 @@ useBootstrap = 0;
 howMany = 1;
 for n=1:howMany
 
-    [retrievedPulse, retrievedFROG, finalGError, finalIterations] = mainFROG(computedFROG, errorTolerance, maxIterations, deltaDelay, whichMethod, hidePlots, useBootstrap);
+    [retrievedPulse, retrievedFROG, finalGError, finalIterations] = mainFROG(experimentalFROG, errorTolerance, maxIterations, deltaDelay, whichMethod, hidePlots, useBootstrap);
 
     retrievedIntensity = abs(retrievedPulse).^2;
     retrievedIntensity = retrievedIntensity/max(retrievedIntensity);
