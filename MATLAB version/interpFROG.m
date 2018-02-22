@@ -1,5 +1,4 @@
-function [omegaFROG, lenDelay, lenOmega, deltaDelay, deltaOmega, centralOmega] = interpFROG(lambdaFROG)
-N = 256;
+function [omegaFROG, deltaDelay, deltaOmega] = interpFROG(lambdaFROG, N)
 
 c = 299.792458; % speed of light in nm/fs
 
@@ -9,7 +8,6 @@ lenLambda = lambdaFROG(2);
 deltaDelay = lambdaFROG(3);
 deltaLambda = lambdaFROG(4);
 centralLambda = lambdaFROG(5);
-centralOmega = 2*pi*c / centralLambda;
 lambdaFROG(1:5,:) = [];
 
 % change domain from lambda to omega
@@ -18,8 +16,6 @@ vectLambda = centralLambda + (-deltaLambda*lenLambda/2:deltaLambda:deltaLambda*(
 vectOmega = 2*pi*c./vectLambda; % to get vector of delOmegas -> diff(vectOmega)
 lenOmega = length(vectOmega);
 omegaFROG = (lambdaFROG)./(2*pi*c) .* (vectLambda'.^2) ;
-
-display(deltaDelay);
 
 % interpolate for FFT-compatible NxN array
 %     if (2*pi/deltaDelay < abs(vectOmega(end)-vectOmega(1)))
@@ -73,7 +69,8 @@ vectOmega = vectOmega - mean(vectOmega);
 
 omegaFROG = interp2(XIn, YIn, omegaFROG, XOut, YOut,'spline', 0);
 %     omegaFROG = interp2(vectDelay,vectOmega,omegaFROG,newVectDelay,newVectOmega,'spline');
-
+deltaOmega = abs(vAF(2)-vAF(1));
+deltaDelay = abs(vT(2)-vT(1));
 omegaFROG = omegaFROG/max(max(omegaFROG));
 end
 
