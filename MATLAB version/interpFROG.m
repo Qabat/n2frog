@@ -14,8 +14,7 @@ lambdaFROG(1:5,:) = [];
 vectDelay = -deltaDelay*lenDelay/2:deltaDelay:deltaDelay*(lenDelay/2-1);
 vectLambda = centralLambda + (-deltaLambda*lenLambda/2:deltaLambda:deltaLambda*(lenLambda/2-1));
 vectOmega = 2*pi*c./vectLambda; % to get vector of delOmegas -> diff(vectOmega)
-lenOmega = length(vectOmega);
-omegaFROG = (lambdaFROG)./(2*pi*c) .* (vectLambda'.^2) ;
+omegaFROG = lambdaFROG./(2*pi*c) .* (vectLambda'.^2) ;
 
 % interpolate for FFT-compatible NxN array
 %     if (2*pi/deltaDelay < abs(vectOmega(end)-vectOmega(1)))
@@ -41,7 +40,10 @@ fExpTempSpan = max(vectDelay) - min(vectDelay);
     vT = vT - vT(1);
     vT = fftshift(vT);
     
-    vAF = linspace(0, 2*pi*N./fExpTempSpan, N);
+    vAF = linspace(0, 2*pi*N./fExpTempSpan, N); 
+%     vAF = linspace(2*pi*N./fExpTempSpan, 0, N); ??????????
+%   jak wrzucam froga liczonego z impulsu to widmo jest w tê strone
+%   zorientowane co tutaj jak wybiore te zakomentowana linijke
     vAF = fftshift(vAF);
     vAF = vAF - vAF(1);
     vAF = fftshift(vAF);
@@ -71,6 +73,5 @@ omegaFROG = interp2(XIn, YIn, omegaFROG, XOut, YOut,'spline', 0);
 %     omegaFROG = interp2(vectDelay,vectOmega,omegaFROG,newVectDelay,newVectOmega,'spline');
 deltaOmega = abs(vAF(2)-vAF(1));
 deltaDelay = abs(vT(2)-vT(1));
-omegaFROG = omegaFROG/max(max(omegaFROG));
 end
 

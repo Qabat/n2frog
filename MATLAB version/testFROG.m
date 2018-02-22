@@ -2,22 +2,26 @@ clc;
 clear;
 close all;
 
-% prepare FROG trace from pulse retrieved by Femtosoft FROG
-% Pulse = dlmread('..\testfrog\result.txt');
-% Time = Pulse(:,1);
-% Intensity = Pulse(:,2);
-% Phase = Pulse(:,3);
-% experimentalFROG = makeFROG(sqrt(Intensity).*exp(1i.*Phase));
-
-% read measured pulse from file
-experimentalFROG = dlmread('..\testfrog\60.txt');
 N = 256;
+
+% prepare FROG trace from pulse retrieved by Femtosoft FROG
+Pulse = dlmread('..\testfrog\result.txt');
+Time = Pulse(:,1);
+Intensity = Pulse(:,2);
+Phase = Pulse(:,3);
+
+% calculate frog from pulse
+% experimentalFROG = makeFROG(sqrt(Intensity).*exp(1i.*Phase));
+% deltaDelay = 6.515;
+% deltaOmega = 1/(N*deltaDelay);
+
+% read measured FROG from file
+experimentalFROG = dlmread('..\testfrog\60.txt');
 [experimentalFROG, deltaDelay, deltaOmega] = interpFROG(experimentalFROG, N);
 
 % input parameters for FROG algorithm
 errorTolerance = 8e-6;
 maxIterations = 500;
-% deltaDelay = 6.515;
 whichMethod = 0;
 hidePlots = 0;
 useBootstrap = 0;
@@ -26,16 +30,16 @@ useBootstrap = 0;
 howMany = 1;
 for n=1:howMany
 
-    [retrievedPulse, retrievedFROG, finalGError, finalIterations] = mainFROG(experimentalFROG, errorTolerance, maxIterations, deltaDelay, whichMethod, hidePlots, useBootstrap);
+    [retrievedPulse, retrievedFROG, finalGError, finalIterations] = mainFROG(experimentalFROG, errorTolerance, maxIterations, deltaDelay, deltaOmega, whichMethod, hidePlots, useBootstrap);
 
     retrievedIntensity = abs(retrievedPulse).^2;
     retrievedIntensity = retrievedIntensity/max(retrievedIntensity);
     retrievedPhase = angle(retrievedPulse);
     retrievedPhase(retrievedIntensity<0.1) = NaN; % phase blanking
 
-    outputFile = [Time, retrievedIntensity, retrievedPhase];
-    method = 'power';
-    dlmwrite(['.\output_' method '\' num2str(n) '.txt'],outputFile,'\t');
+%     outputFile = [Time, retrievedIntensity, retrievedPhase];
+%     method = 'power';
+%     dlmwrite(['.\output_' method '\' num2str(n) '.txt'],outputFile,'\t');
 
 end
 
