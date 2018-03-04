@@ -2,7 +2,7 @@
 
 This program when finished is supposed to get measured SHG FROG spectrogram and experimental parameters as input and give n2 with error as output.
 
-First, MATLAB version will be developed and when it is working, it will be rewritten in Python to be fully open source.
+MATLAB version will be developed first and when it will be working properly, it will be rewritten in Python to be fully open source.
 
 Main part of this software (FROG algorithm) is based on:
 
