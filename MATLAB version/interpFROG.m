@@ -1,36 +1,20 @@
-function [omegaFROG, deltaDelay, deltaOmega] = interpFROG(lambdaFROG, N)
+function [omegaFROG, vT, vAF] = interpFROG(lambdaFROG, header, N)
 
 c = 299.792458; % speed of light in nm/fs
 
-% read in parameters and spectrogram
-lenDelay = lambdaFROG(1);
-lenLambda = lambdaFROG(2);
-deltaDelay = lambdaFROG(3);
-deltaLambda = lambdaFROG(4);
-centralLambda = lambdaFROG(5);
-lambdaFROG(1:5,:) = [];
+% read in parameters of spectrogram
+lenDelay = header(1);
+lenLambda = header(2);
+deltaDelay = header(3);
+deltaLambda = header(4);
+centralLambda = header(5);
 
 % change domain from lambda to omega
 vectDelay = -deltaDelay*lenDelay/2:deltaDelay:deltaDelay*(lenDelay/2-1);
 vectLambda = centralLambda + (-deltaLambda*lenLambda/2:deltaLambda:deltaLambda*(lenLambda/2-1));
-vectOmega = 2*pi*c./vectLambda; % to get vector of delOmegas -> diff(vectOmega)
+vectOmega = 2*pi*c./vectLambda;
+vectOmega = vectOmega - mean(vectOmega);
 omegaFROG = lambdaFROG./(2*pi*c) .* (vectLambda'.^2) ;
-
-% interpolate for FFT-compatible NxN array
-%     if (2*pi/deltaDelay < abs(vectOmega(end)-vectOmega(1)))
-%         deltaOmega = 2*pi / (deltaDelay*lenDelay);
-%         display(deltaOmega);
-%         N = lenDelay;
-%     else
-%         deltaOmega = abs(vectOmega(1) - vectOmega(end)) / 255;
-%         deltaDelay = 2*pi / (deltaOmega*lenOmega);
-%         display(deltaOmega);
-%         display(deltaDelay);
-%         N = lenOmega;
-%     end
-%
-%     deltaDelay = 10;
-%     deltaOmega = 0.0001;
 
 fExpTempSpan = max(vectDelay) - min(vectDelay);
 
@@ -40,10 +24,9 @@ fExpTempSpan = max(vectDelay) - min(vectDelay);
     vT = vT - vT(1);
     vT = fftshift(vT);
     
-    vAF = linspace(0, 2*pi*N./fExpTempSpan, N); 
-%     vAF = linspace(2*pi*N./fExpTempSpan, 0, N); ??????????
-%   jak wrzucam froga liczonego z impulsu to widmo jest w tê strone
-%   zorientowane co tutaj jak wybiore te zakomentowana linijke
+%     vAF = linspace(0, 2*pi*N./fExpTempSpan, N); 
+    
+    vAF = linspace(2*pi*N./fExpTempSpan, 0, N); 
     vAF = fftshift(vAF);
     vAF = vAF - vAF(1);
     vAF = fftshift(vAF);
@@ -60,18 +43,18 @@ fExpTempSpan = max(vectDelay) - min(vectDelay);
 %     vT = vT - vT(1);
 %     vT = fftshift(vT);
 % end
-vectOmega = vectOmega - mean(vectOmega);
 
-%     newVectDelay = -deltaDelay*N/2:deltaDelay:deltaDelay*(N/2-1);
-%     newVectOmega = centralOmega + (deltaOmega*N/2:-deltaOmega:-deltaOmega*(N/2-1));
-
+% interpolate to new data points
 [XIn, YIn] = meshgrid(vectDelay,vectOmega);
-%     [XOut, YOut] = meshgrid(newVectDelay,newVectOmega);
 [XOut, YOut] = meshgrid(vT, vAF);
-
 omegaFROG = interp2(XIn, YIn, omegaFROG, XOut, YOut,'spline', 0);
-%     omegaFROG = interp2(vectDelay,vectOmega,omegaFROG,newVectDelay,newVectOmega,'spline');
-deltaOmega = abs(vAF(2)-vAF(1));
-deltaDelay = abs(vT(2)-vT(1));
+omegaFROG(omegaFROG<0) = 0;
+
+% shift maximum to 0 delay
+[Maxrows, Maxcols] = find(omegaFROG == max(omegaFROG(:)));
+omegaFROG = circshift(omegaFROG, [-abs(N/2-Maxrows) -abs(N/2-Maxcols)]);
+
+% normalize spectrogram
+omegaFROG = omegaFROG/max(max(omegaFROG));
 end
 
