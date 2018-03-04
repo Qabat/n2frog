@@ -2,6 +2,8 @@
 
 This program when finished is supposed to get measured SHG FROG spectrogram and experimental parameters as input and give n2 with error as output.
 
+First, MATLAB version will be developed and when it is working, it will be rewritten in Python to be fully open source.
+
 Main part of this software (FROG algorithm) is based on:
 
 - Adam Wyatt's program, available here: https://www.mathworks.com/matlabcentral/fileexchange/16235-frequency-resolved-optical-gating--frog-
