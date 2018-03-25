@@ -16,7 +16,7 @@ Phase = Pulse(:,3);
 % deltaOmega = 1/(N*deltaDelay);
 
 scaleDelay = 1;
-scaleLambda = 0.8;
+scaleLambda = 0.7;
 
 % read measured FROG from file
 experimentalFROG = dlmread('..\testfrog\60.txt');
