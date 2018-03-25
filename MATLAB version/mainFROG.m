@@ -34,14 +34,20 @@ end
 %   F R O G   I T E R A T I O N   A L G O R I T H M
 %   ------------------------------------------------------------
 
-mainFigure = figure('units','normalized','outerposition',[0.3 0.1 0.4 0.8]);
+mainFigure = figure('units','normalized','outerposition',[0 0 1 1]);
+% mainFigure = figure('units','normalized','outerposition',[0.3 0.1 0.4 0.8]);
 finalIterations = 1;
 finalGError = 1e10;
 testError = 1e10;
 iterationVector = [];
 errorVector = [];
+bestError = 1;
+bestFROG = [];
+bestPulse = [];
 
-while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
+stopped = 0;
+
+while (stopped == 0)
     
     % for debugging
     %pause(1);
@@ -62,10 +68,6 @@ while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
     
 	% extract pulse field from FROG complex amplitude
 	retrievedPulse = makePulse(retrievedEFROG,retrievedPulse,whichMethod); 
-
-	% use weighted average to keep peak centered at zero
-	centerIndex = sum((1:N)'.*abs(retrievedPulse.^4))/sum(abs(retrievedPulse.^4));
-	retrievedPulse = circshift(retrievedPulse,-round(centerIndex-N/2));
     
     % keep zero phase at zero (in power method its close to zero by itself)
     %if (whichMethod == 1)
@@ -73,19 +75,28 @@ while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
     %end
     
     % phase flip (and intensity flip) if n2 would come out negative
-    if ((trapz(gradient(gradient(angle(retrievedPulse(round(N/2-N/20):round(N/2+N/20))))))>0) && (finalGError < 1e-2))
+    flipRange = 3;
+    if ((trapz(gradient(gradient(angle(retrievedPulse(round(N/2-flipRange):round(N/2+flipRange))))))>0) && (finalGError < 1e-2))
         retrievedPulse = flipud(abs(retrievedPulse)).*exp(-1i*flipud(angle(retrievedPulse)));
     end
     
     % add perturbation to the pulse if the error is stagnating
-    if (mod(finalIterations,30) == 0)
+    if (mod(finalIterations,50) == 0)
         testError = finalGError;
     end
-    if ((abs(testError - finalGError) < testError/10) && (mod(finalIterations,30) == 29))
+    if ((abs(testError - finalGError) < testError/10) && (mod(finalIterations,50) == 49))
         %change it so it doesnt use awgn but rand()
         retrievedPulse = retrievedPulse + (maxIterations - finalIterations)/10000;
     end
 
+    	% use weighted average to keep peak centered at zero
+% 	centerIndex = sum((1:N)'.*abs(retrievedPulse.^4))/sum(abs(retrievedPulse.^4));
+% 	retrievedPulse = circshift(retrievedPulse, -round(centerIndex-N/2));
+    
+    % use maximum value to keep peak centered at zero
+	[maxV, centerIndex] = max(abs(retrievedPulse));
+	retrievedPulse = circshift(retrievedPulse, N/2-centerIndex);
+    
     % make a FROG trace from new fields
 	[retrievedFROG, retrievedEFROG] = makeFROG(retrievedPulse);
     
@@ -99,20 +110,36 @@ while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
     iterationVector = [iterationVector; finalIterations];
     errorVector = [errorVector; finalGError];
     
+    % best pulse
+    if (finalGError < bestError)
+        bestError = finalGError;
+        bestFROG = retrievedFROG;
+        bestPulse = retrievedPulse;
+    end
+    
     % drawing
     if (hidePlots == 0)
+        
+        % show best fit after algorithm finishes
+        if ~((finalGError > errorTolerance) && (finalIterations < maxIterations))
+            stopped = 1;
+            finalGError = bestError;
+            retrievedFROG = bestFROG;
+            retrievedPulse = bestPulse;
+        end
+            
         figure(mainFigure)
-        colormap('jet');
+        colormap('hot');
         
         subplot(3,2,1) % original FROG trace plot
-        image([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], sqrt(originalFROG)*64); %64 is colormap range, (SQRT had to be removed) SQRT for electric field
+        imagesc([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], sqrt(originalFROG));
         title('Original FROG trace');
         xlabel('Delay [fs]');
         ylabel('Signal frequency [THz]');
         pbaspect([1 1 1])
         
 		subplot(3,2,3) % retrieved FROG trace plot
-		image([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], sqrt(retrievedFROG)*64);
+		imagesc([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], sqrt(retrievedFROG));
 		title('Reconstructed FROG trace');
 		xlabel('Delay [fs]');
 		ylabel('Signal frequency [THz]');
@@ -129,7 +156,7 @@ while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
 		plot(freqLabels, 2*pi*abs(FFTPt).^2/max(abs(FFTPt))^2,freqLabels,angle(FFTPt)+pi);
 		title('Reconstructed spectrum and spectral phase');
 		xlabel('Frequency [THz]');
-		axis([freqRange/5 0 6.5]);
+		axis([freqRange 0 6.5]);
         
         subplot(3,1,3) % frog error
         plot(iterationVector, errorVector );
@@ -139,12 +166,13 @@ while ((finalGError > errorTolerance) && (finalIterations < maxIterations))
         set(gca, 'YScale', 'log')
         
 		drawnow;
-        finalIterations = finalIterations + 1;
-        
+
         % pressing q ends the program
-		if(strcmp(get(mainFigure,'CurrentCharacter'),'q'))
+		if (strcmp(get(mainFigure,'CurrentCharacter'),'q'))
             close all;
             break;
         end
+        
+        finalIterations = finalIterations + 1;
     end
 end

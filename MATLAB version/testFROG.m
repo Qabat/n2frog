@@ -14,16 +14,19 @@ Phase = Pulse(:,3);
 % experimentalFROG = makeFROG(sqrt(Intensity).*exp(1i.*Phase));
 % deltaDelay = 6.515;
 % deltaOmega = 1/(N*deltaDelay);
-% deltaOmega = 17; % nawet dla losowej delty zbiega, jak nie spe³nia tego warunku na FFT...
+
+scaleDelay = 2;
+scaleLambda = 1;
 
 % read measured FROG from file
 experimentalFROG = dlmread('..\testfrog\60.txt');
 [experimentalFROG, header] = denoiseFROG(experimentalFROG);
-[experimentalFROG, delays, omegas] = interpFROG(experimentalFROG, header, N);
+[experimentalFROG, header] = resampleFROG(experimentalFROG, header, scaleDelay, scaleLambda, 256);
+[experimentalFROG, delays, omegas] = switchDomain(experimentalFROG, header, N);
 
 % input parameters for FROG algorithm
-errorTolerance = 1e-3;
-maxIterations = 200;
+errorTolerance = 1e-4;
+maxIterations = 500;
 whichMethod = 0;
 hidePlots = 0;
 useBootstrap = 0;
