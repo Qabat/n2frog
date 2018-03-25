@@ -1,6 +1,7 @@
-function [omegaFROG, vT, vAF] = interpFROG(lambdaFROG, header, N)
+function [omegaFROG, vT, vAF] = switchDomain(lambdaFROG, header, N)
 
-c = 299.792458; % speed of light in nm/fs
+% speed of light in nm/fs
+c = 299.792458;
 
 % read in parameters of spectrogram
 lenDelay = header(1);
@@ -17,7 +18,7 @@ vectOmega = vectOmega - mean(vectOmega);
 omegaFROG = lambdaFROG./(2*pi*c) .* (vectLambda'.^2) ;
 
 fExpTempSpan = max(vectDelay) - min(vectDelay);
-
+ 
 % if 2*pi*N/fExpTempSpan < max(vectOmega) - min(vectOmega)
     vT = linspace(0, fExpTempSpan, N);
     vT = fftshift(vT);
@@ -26,7 +27,7 @@ fExpTempSpan = max(vectDelay) - min(vectDelay);
     
 %     vAF = linspace(0, 2*pi*N./fExpTempSpan, N); 
     
-    vAF = linspace(2*pi*N./fExpTempSpan, 0, N); 
+    vAF = linspace(2*pi*N./fExpTempSpan, 0, N);
     vAF = fftshift(vAF);
     vAF = vAF - vAF(1);
     vAF = fftshift(vAF);
