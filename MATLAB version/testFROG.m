@@ -1,8 +1,8 @@
-clc;
-clear;
-close all;
+% clc;
+% clear;
+% close all;
 
-N = 256;
+N = 128;
 
 % prepare FROG trace from pulse retrieved by Femtosoft FROG
 Pulse = dlmread('..\testfrog\result.txt');
@@ -15,8 +15,8 @@ Phase = Pulse(:,3);
 % deltaDelay = 6.515;
 % deltaOmega = 1/(N*deltaDelay);
 
-scaleDelay = 2;
-scaleLambda = 1;
+scaleDelay = 1;
+scaleLambda = 0.8;
 
 % read measured FROG from file
 experimentalFROG = dlmread('..\testfrog\60.txt');
@@ -26,7 +26,7 @@ experimentalFROG = dlmread('..\testfrog\60.txt');
 
 % input parameters for FROG algorithm
 errorTolerance = 1e-4;
-maxIterations = 500;
+maxIterations = 300;
 whichMethod = 0;
 hidePlots = 0;
 useBootstrap = 0;

@@ -7,16 +7,41 @@ deltaDelay = header(3);
 deltaLambda = header(4);
 centralLambda = header(5);
 
-% calculate new vectors
-vectDelay = -deltaDelay*lenDelay/2:deltaDelay:deltaDelay*(lenDelay/2-1);
-vectLambda = centralLambda + (-deltaLambda*lenLambda/2:deltaLambda:deltaLambda*(lenLambda/2-1));
-newDelay = linspace(-deltaDelay*lenDelay/2 * scaleDelay, deltaDelay*(lenDelay/2-1) * scaleDelay, N);
-newLambda = centralLambda + linspace(-deltaLambda*lenLambda/2 * scaleLambda, deltaLambda*(lenLambda/2-1) * scaleLambda, N);
+% cut the trace
+cutDelay = floor(lenDelay*(1-scaleDelay)/2);
+cutLambda = floor(lenLambda*(1-scaleLambda)/2);
 
-% interpolate to new axis
+filteredFROG(:,(end-cutDelay+1):end) = [];
+filteredFROG(:,1:cutDelay) = [];
+filteredFROG((end-cutLambda+1):end,:) = [];
+filteredFROG(1:cutLambda,:) = [];
+
+vectDelay = (-deltaDelay*(lenDelay-2*cutDelay)/2):deltaDelay:(deltaDelay*((lenDelay-2*cutDelay)/2-1));
+vectLambda = centralLambda + ((-deltaLambda*(lenLambda-2*cutLambda)/2):deltaLambda:(deltaLambda*((lenLambda-2*cutLambda)/2-1)));
+
+% resample axes
+newdeltaDelay = deltaDelay/scaleLambda;
+newdeltaLambda = deltaLambda/scaleDelay;
+interDelay = (-deltaDelay*(lenDelay-2*cutDelay)/2):newdeltaDelay:(deltaDelay*((lenDelay-2*cutDelay)/2-1));
+interLambda = centralLambda + ((-deltaLambda*(lenLambda-2*cutLambda)/2):newdeltaLambda:(deltaLambda*((lenLambda-2*cutLambda)/2-1)));
+
 [XIn, YIn] = meshgrid(vectDelay, vectLambda);
+[XOut, YOut] = meshgrid(interDelay, interLambda);
+interpedFROG = interp2(XIn, YIn, filteredFROG, XOut, YOut,'spline');
+interpedFROG(interpedFROG<0) = 0;
+
+% stretch to NxN
+size(interpedFROG)
+
+newDelay = (-newdeltaDelay*(N/2)):newdeltaDelay:(newdeltaDelay*(N/2-1));
+newLambda = centralLambda + ((-newdeltaLambda*(N/2)):newdeltaLambda:(newdeltaLambda*(N/2-1)));
+
+size(newDelay)
+size(newLambda)
+
+[XIn, YIn] = meshgrid(interDelay, interLambda);
 [XOut, YOut] = meshgrid(newDelay, newLambda);
-interpedFROG = interp2(XIn, YIn, filteredFROG, XOut, YOut,'spline', 0);
+interpedFROG = interp2(XIn, YIn, interpedFROG, XOut, YOut,'spline',0);
 interpedFROG(interpedFROG<0) = 0;
 
 % update header values

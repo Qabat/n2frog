@@ -89,13 +89,13 @@ while (stopped == 0)
         retrievedPulse = retrievedPulse + (maxIterations - finalIterations)/10000;
     end
 
-    	% use weighted average to keep peak centered at zero
-% 	centerIndex = sum((1:N)'.*abs(retrievedPulse.^4))/sum(abs(retrievedPulse.^4));
-% 	retrievedPulse = circshift(retrievedPulse, -round(centerIndex-N/2));
+    % use weighted average to keep peak centered at zero
+	centerIndex = sum((1:N)'.*abs(retrievedPulse.^4))/sum(abs(retrievedPulse.^4));
+	retrievedPulse = circshift(retrievedPulse, -round(centerIndex-N/2));
     
     % use maximum value to keep peak centered at zero
-	[maxV, centerIndex] = max(abs(retrievedPulse));
-	retrievedPulse = circshift(retrievedPulse, N/2-centerIndex);
+% 	[maxV, centerIndex] = max(abs(retrievedPulse));
+% 	retrievedPulse = circshift(retrievedPulse, N/2-centerIndex);
     
     % make a FROG trace from new fields
 	[retrievedFROG, retrievedEFROG] = makeFROG(retrievedPulse);
@@ -129,7 +129,7 @@ while (stopped == 0)
         end
             
         figure(mainFigure)
-        colormap('hot');
+        colormap('jet');
         
         subplot(3,2,1) % original FROG trace plot
         imagesc([min(timeLabels) max(timeLabels)],[min(freqLabels) max(freqLabels)], sqrt(originalFROG));
