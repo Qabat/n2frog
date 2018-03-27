@@ -1,7 +1,11 @@
-function [intensityFROG, electricFROG] = makeFROG(electricField)
+%   ------------------------------------------------------------
+%   makeFROG calculates FROG trace from given electricField
+%   ------------------------------------------------------------
 
-N = length(electricField);
-electricFROG = electricField*(electricField.');
+function [intensityFROG, electricFROG] = makeFROG(inputPulse)
+
+N = length(inputPulse);
+electricFROG = inputPulse*(inputPulse.');
 
 % row rotation
 for n=2:N
@@ -9,10 +13,12 @@ for n=2:N
 end
 
 % permute the columns to the right order
-electricFROG=fliplr(fftshift(electricFROG,2));
+electricFROG = fliplr(fftshift(electricFROG, 2));
 
 % FFT each column and put 0 frequency in the correct place:
-electricFROG=circshift(fft(electricFROG,[],1),ceil(N/2)-1);
+electricFROG = circshift(fft(electricFROG, [], 1),ceil(N/2)-1);
 
-% generate FROG trace (= |field|^2)
+% generate FROG trace
 intensityFROG = abs(electricFROG).^2;
+
+end

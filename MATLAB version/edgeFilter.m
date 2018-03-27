@@ -1,3 +1,7 @@
+%   ------------------------------------------------------------
+%   edgeFilter removes the edge of a FROG trace object
+%   ------------------------------------------------------------
+
 function cleanFROG = edgeFilter(FROG)
     edgeWidth = 2;
     firstVertical = find(FROG(:,round(end/2)),1,'first');
@@ -10,4 +14,3 @@ function cleanFROG = edgeFilter(FROG)
                           FROG(lastHorizontal-edgeWidth:lastHorizontal, round(end/2)-edgeWidth:round(end/2)+edgeWidth)']));
     cleanFROG = FROG - edgeMean;
 end
-

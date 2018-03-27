@@ -1,4 +1,9 @@
-function [omegaFROG, vT, vAF] = switchDomain(lambdaFROG, header, N)
+%   --------------------------------------------------------------
+%   switchDomain converts the trace
+%   from wavelength domain to frequency domain
+%   --------------------------------------------------------------
+
+function [omegaFROG, newDelay, newOmega] = switchDomain(lambdaFROG, header, N)
 
 % speed of light in nm/fs
 c = 299.792458;
@@ -17,45 +22,26 @@ vectOmega = 2*pi*c./vectLambda;
 vectOmega = vectOmega - mean(vectOmega);
 omegaFROG = lambdaFROG./(2*pi*c) .* (vectLambda'.^2) ;
 
-fExpTempSpan = max(vectDelay) - min(vectDelay);
- 
-% if 2*pi*N/fExpTempSpan < max(vectOmega) - min(vectOmega)
-    vT = linspace(0, fExpTempSpan, N);
-    vT = fftshift(vT);
-    vT = vT - vT(1);
-    vT = fftshift(vT);
-    
-%     vAF = linspace(0, 2*pi*N./fExpTempSpan, N); 
-    
-    vAF = linspace(2*pi*N./fExpTempSpan, 0, N);
-    vAF = fftshift(vAF);
-    vAF = vAF - vAF(1);
-    vAF = fftshift(vAF);
-% else
-%     fExpAFSpan = max(vectOmega) - min(vectOmega);
-%     
-%     vAF = linspace(0, fExpAFSpan, N);
-%     vAF = fftshift(vAF);
-%     vAF = vAF - vAF(1);
-%     vAF = fftshift(vAF);
-%     
-%     vT = linspace(0, 2*pi*N/fExpAFSpan, N);
-%     vT = fftshift(vT);
-%     vT = vT - vT(1);
-%     vT = fftshift(vT);
-% end
+% set new spacing satisfying FFT 
+temporalSpan = max(vectDelay) - min(vectDelay);
+newDelay = linspace(0, temporalSpan, N);
+newDelay = fftshift(newDelay);
+newDelay = fftshift(newDelay - newDelay(1));
+newOmega = linspace(2*pi*N./temporalSpan, 0, N);
+newOmega = fftshift(newOmega);
+newOmega = fftshift(newOmega - newOmega(1));
 
 % interpolate to new data points
 [XIn, YIn] = meshgrid(vectDelay,vectOmega);
-[XOut, YOut] = meshgrid(vT, vAF);
+[XOut, YOut] = meshgrid(newDelay, newOmega);
 omegaFROG = interp2(XIn, YIn, omegaFROG, XOut, YOut,'spline', 0);
 omegaFROG(omegaFROG<0) = 0;
 
 % shift maximum to 0 delay
-[Maxrows, Maxcols] = find(omegaFROG == max(omegaFROG(:)));
-omegaFROG = circshift(omegaFROG, [-abs(N/2-Maxrows) -abs(N/2-Maxcols)]);
+[maxRows, maxCols] = find(omegaFROG == max(omegaFROG(:)));
+omegaFROG = circshift(omegaFROG, [-abs(N/2-maxRows) -abs(N/2-maxCols)]);
 
 % normalize spectrogram
 omegaFROG = omegaFROG/max(max(omegaFROG));
-end
 
+end

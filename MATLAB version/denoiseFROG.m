@@ -1,3 +1,9 @@
+%   ------------------------------------------------------------
+%   denoiseFROG runs three noise cleaning algorithms
+%   that remove excess noise while preserving
+%   important parts of the trace
+%   ------------------------------------------------------------
+
 function [cleanFROG, header] = denoiseFROG(FROG)
 
 header = FROG(1:5,1);
@@ -23,5 +29,5 @@ end
 % lone pixels
 cleanFROG(bwareaopen(cleanFROG, 10)==0) = 0;
 cleanFROG(cleanFROG<0) = 0;
-end
 
+end
