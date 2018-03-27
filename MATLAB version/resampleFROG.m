@@ -1,3 +1,8 @@
+%   --------------------------------------------------------------
+%   resampleFROG interpolates the trace to new size
+%   rescaling delay and lambda spacing
+%   --------------------------------------------------------------
+
 function [interpedFROG, header] = resampleFROG(filteredFROG, header, scaleDelay, scaleLambda, N)
 
 % read in parameters of spectrogram
@@ -31,13 +36,8 @@ interpedFROG = interp2(XIn, YIn, filteredFROG, XOut, YOut,'spline');
 interpedFROG(interpedFROG<0) = 0;
 
 % stretch to NxN
-size(interpedFROG)
-
 newDelay = (-newdeltaDelay*(N/2)):newdeltaDelay:(newdeltaDelay*(N/2-1));
 newLambda = centralLambda + ((-newdeltaLambda*(N/2)):newdeltaLambda:(newdeltaLambda*(N/2-1)));
-
-size(newDelay)
-size(newLambda)
 
 [XIn, YIn] = meshgrid(interDelay, interLambda);
 [XOut, YOut] = meshgrid(newDelay, newLambda);
@@ -51,4 +51,3 @@ header(3) = abs(newDelay(2)-newDelay(1));
 header(4) = abs(newLambda(2)-newLambda(1));
 
 end
-
