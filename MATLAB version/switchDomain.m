@@ -37,9 +37,10 @@ newOmega = fftshift(newOmega - newOmega(1));
 omegaFROG = interp2(XIn, YIn, omegaFROG, XOut, YOut,'spline', 0);
 omegaFROG(omegaFROG<0) = 0;
 
-% shift maximum to 0 delay
-[maxRows, maxCols] = find(omegaFROG == max(omegaFROG(:)));
-omegaFROG = circshift(omegaFROG, [-abs(N/2-maxRows) -abs(N/2-maxCols)]);
+% shift maximum of autocorrelation to 0 delay
+autocorrelation = sum(omegaFROG, 1);
+[maxValue, maxIndex] = max(autocorrelation);
+omegaFROG = circshift(omegaFROG, [0 -abs(N/2-maxIndex)]);
 
 % normalize spectrogram
 omegaFROG = omegaFROG/max(max(omegaFROG));
