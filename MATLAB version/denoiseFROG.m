@@ -4,7 +4,7 @@
 %   important parts of the trace
 %   ------------------------------------------------------------
 
-function [cleanFROG, header] = denoiseFROG(FROG)
+function [cleanFROG, header] = denoiseFROG(FROG, edgeTimes)
 
 header = FROG(1:5,1);
 FROG(1:5,:) = [];
@@ -15,7 +15,7 @@ cleanFROG = cleanFROG/max(max(cleanFROG));
 cleanFROG(cleanFROG<0) = 0;
 
 % edge
-for ii = 1:5
+for ii = 1:edgeTimes
     cleanFROG = edgeFilter(cleanFROG);
     cleanFROG(cleanFROG<0) = 0;
 end

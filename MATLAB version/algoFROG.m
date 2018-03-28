@@ -23,10 +23,6 @@ if (useBootstrap == 1)
     end
 end
 
-%   ------------------------------------------------------------
-%   F R O G   I T E R A T I O N   A L G O R I T H M
-%   ------------------------------------------------------------
-
 % prepare figure
 mainFigure = figure('units','normalized');
 drawnow
@@ -69,7 +65,7 @@ while (stopped == 0)
     
     % phase and intensity flip if n2 would come out negative
     flipRange = 10;
-    if ((trapz(gradient(gradient(angle(retrievedPulse(round(N/2-flipRange/2):round(N/2+flipRange/2))))))>0) && (rmsError < 3e-2))
+    if ((trapz(gradient(gradient(angle(retrievedPulse(round(N/2-flipRange/2):round(N/2+flipRange/2))))))>0) && (rmsError < 2e-2))
         retrievedPulse = flipud(abs(retrievedPulse)).*exp(-1i*flipud(angle(retrievedPulse)));
     end
 
@@ -81,7 +77,7 @@ while (stopped == 0)
         testError = rmsError;
     end
     if ((abs(testError - rmsError) < testError/10) && (mod(finalIterations,50) == 49))
-        retrievedFROG = retrievedFROG + 0.01*rand(N);
+        retrievedFROG = retrievedFROG + rand(N);
     end
 
 	% scale the trace to minimize the error and calculate it
