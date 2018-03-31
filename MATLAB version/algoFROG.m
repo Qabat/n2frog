@@ -3,7 +3,7 @@
 %   the ultrashort pulse from measured FROG trace.
 %   ------------------------------------------------------------
 
-function [retrievedPulse, retrievedFROG, rmsError, finalIterations] = algoFROG(originalFROG, errorTolerance, maxIterations, delays, omegas, whichMethod, hidePlots, useBootstrap)
+function [retrievedPulse, retrievedFROG, rmsError, finalIterations] = algoFROG(originalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap)
 
 % get trace dimensions
 N = size(originalFROG, 1);
@@ -24,14 +24,11 @@ if (useBootstrap == 1)
 end
 
 % prepare figure
-mainFigure = figure('units','normalized');
-drawnow
-jFig = get(handle(mainFigure), 'JavaFrame'); 
-jFig.setMaximized(true);
+mainFigure = figure('Position',[150 75 1600 900]);
 colormap([1 1 1; jet(64)]);
 brighten(0.4);
 
-% create needed variables
+% create some variables
 finalIterations = 1;
 rmsError = 1e10;
 testError = 1e10;
@@ -61,25 +58,17 @@ while (stopped == 0)
     tau = sum(delays' .* abs(retrievedPulse).^2)/sum(abs(retrievedPulse).^2);
     retrievedPulse = ifftshift(ifft(ifftshift(fftshift(fft(fftshift(retrievedPulse))).*exp(-1i.*omegas'.*tau))));
     [~, centerPulse] = max(abs(retrievedPulse).^2);
-    retrievedPulse = abs(retrievedPulse).*exp(1i*(angle(retrievedPulse) - angle(retrievedPulse(centerPulse))));
-    
+    retrievedPulse = retrievedPulse./retrievedPulse(centerPulse);
+
     % phase and intensity flip if n2 would come out negative
-    flipRange = 10;
-    if ((trapz(gradient(gradient(angle(retrievedPulse(round(N/2-flipRange/2):round(N/2+flipRange/2))))))>0) && (rmsError < 2e-2))
+    flipRange = round(0.08*N);
+    if ((trapz(gradient(gradient(angle(retrievedPulse(round(N/2-flipRange/2):round(N/2+flipRange/2))))))>0) && (rmsError < 2e-2) && (flipPhase  == 1))
         retrievedPulse = flipud(abs(retrievedPulse)).*exp(-1i*flipud(angle(retrievedPulse)));
     end
 
     % make a FROG trace from new fields
 	[retrievedFROG, retrievedEFROG] = makeFROG(retrievedPulse);
     
-    % add perturbation to the pulse if the error is stagnating
-    if (mod(finalIterations,50) == 0)
-        testError = rmsError;
-    end
-    if ((abs(testError - rmsError) < testError/10) && (mod(finalIterations,50) == 49))
-        retrievedFROG = retrievedFROG + rand(N);
-    end
-
 	% scale the trace to minimize the error and calculate it
 	retrievedFROG = retrievedFROG * sum(sum(originalFROG.*retrievedFROG))/sum(sum(retrievedFROG.^2));
 	rmsError = sqrt(mean(mean((originalFROG-retrievedFROG).^2)));
@@ -105,7 +94,9 @@ while (stopped == 0)
            
     % text output when plots are turned off
     if (hidePlots == 1)
-		disp(['Iteration number: ' num2str(finalIterations) '  Error: ' num2str(rmsError)]);
+        if stopped == 1
+            disp(['Best error: ' num2str(rmsError)]);
+        end
         close all;
     end
     

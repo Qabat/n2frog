@@ -38,9 +38,15 @@ omegaFROG = interp2(XIn, YIn, omegaFROG, XOut, YOut,'spline', 0);
 omegaFROG(omegaFROG<0) = 0;
 
 % shift maximum of autocorrelation to 0 delay
-autocorrelation = sum(omegaFROG, 1);
-[maxValue, maxIndex] = max(autocorrelation);
+temporalMarginal = sum(omegaFROG, 1);
+[~, maxIndex] = max(temporalMarginal);
 omegaFROG = circshift(omegaFROG, [0 -abs(N/2-maxIndex)]);
+
+% shift spectral center of mass to 0 frequency
+spectralMarginal = sum(omegaFROG, 2);
+cmShift = sum(newOmega' .* abs(spectralMarginal))/sum(abs(spectralMarginal));
+cmIndex = find(abs(cmShift - newOmega) <= abs(newOmega(1)-newOmega(2))/2);
+omegaFROG = circshift(omegaFROG, [round(N/2-cmIndex) 0]);
 
 % normalize spectrogram
 omegaFROG = omegaFROG/max(max(omegaFROG));
