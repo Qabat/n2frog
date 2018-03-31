@@ -9,13 +9,13 @@ close all;
 % fullRun = 1 runs 100 times without bootstrap to calculate mean pulse and
 % then 100 times with bootstrap to calculate errorbars, =0 just one time
 fullRun = 1;
-experimentalFROG = dlmread('../testfrog/60.txt');
+experimentalFROG = dlmread('../test data/60.txt');
 fileName = 'YAG 60';
 
 % set parameters of a trace
 N = 128;
 
-% 0.5, 0.7 for YVO
+% 0.5, 0.7 for YVO, 1, 0.4 for new measurements
 scaleDelay = 1;
 scaleLambda = 0.4;
 edgeFiltering = 0;
