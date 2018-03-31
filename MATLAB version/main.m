@@ -36,6 +36,7 @@ denseOmegas = linspace(omegas(1), omegas(end), 2^12);
 errorTolerance = 1e-3;
 maxIterations = 500;
 whichMethod = 0;
+howMany = 10;
 
 if ~fullRun
     hidePlots = 0;
@@ -44,7 +45,6 @@ if ~fullRun
 else
 	hidePlots = 1;
     useBootstrap = 0; % when using bootstrap for calculating errors make howMany = 100
-    howMany = 100;
     for n = 1:howMany
         
         disp(num2str(n));
@@ -79,7 +79,7 @@ else
 
         % save pulse to file
         outputFile = [denseDelays' retrievedIntensity' retrievedPhase' 1000*denseOmegas' retrievedSpectrum' retrievedSPhase' finalError*ones(length(denseDelays),1)];
-        dlmwrite(['.\output\' num2str(n) '.txt'], outputFile, '\t');
+        dlmwrite(['../../output/' num2str(n) '.txt'], outputFile, '\t');
 
     end
 
@@ -91,7 +91,7 @@ else
     for n=1:howMany
 
         % plotting results of multiple FROG runs
-        file = dlmread(['.\output\' num2str(n) '.txt']);
+        file = dlmread(['../../output/' num2str(n) '.txt']);
         subplot(1,2,1)
         plot(file(:,1),file(:,2)*pi)
         hold on
@@ -121,7 +121,6 @@ else
 
     hidePlots = 1;
     useBootstrap = 1; % when using bootstrap for calculating errors make howMany = 100
-    howMany = 100;
     for n = 1:howMany
         
         disp([num2str(n) 'b']);
@@ -156,7 +155,7 @@ else
 
         % save pulse to file
         outputFile = [denseDelays' retrievedIntensity' retrievedPhase' 1000*denseOmegas' retrievedSpectrum' retrievedSPhase' finalError*ones(length(denseDelays),1)];
-        dlmwrite(['.\output\' num2str(n) '.txt'], outputFile, '\t');
+        dlmwrite(['../../output/' num2str(n) '.txt'], outputFile, '\t');
 
     end
 
@@ -168,7 +167,7 @@ else
     for n=1:howMany
 
         % plotting results of multiple FROG runs
-        file = dlmread(['.\output\' num2str(n) '.txt']);
+        file = dlmread(['../../output/' num2str(n) '.txt']);
         subplot(1,2,1)
         plot(file(:,1),file(:,2)*pi)
         hold on
@@ -199,5 +198,5 @@ else
     xlim([-1000 1000]);
     
     % writing final result to file
-    dlmwrite(['.\fullruns\' fileName '.txt'], [denseDelays', intensity, phase, intensityError, phaseError], '\t');
+    dlmwrite(['../../fullruns/' fileName '.txt'], [denseDelays', intensity, phase, intensityError, phaseError], '\t');
 end
