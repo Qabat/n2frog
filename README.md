@@ -1,8 +1,8 @@
 # SHG FROG PCGPA software for measuring nonlinear refractive index
 
-This program when finished is supposed to get measured SHG FROG spectrogram and experimental parameters as input and give n2 with error as output.
+This program will take measured SHG FROG spectrogram and some experimental parameters as input and give n2 with error as output for particular measured material.
 
-MATLAB version will be developed first and when it will be working properly, it will be rewritten in Python to be fully open source.
+FROG algorithm with bootstrap implemented is working correctly in MATLAB. Now n2 fitting procedure is being developed. After everything works properly in matlab it will be rewritten in Python in the future.
 
 Main part of this software (FROG algorithm) is based on:
 
