@@ -10,8 +10,8 @@ N = size(originalFROG, 1);
 
 % generate initial guess
 initialIntensity = exp(-2*log(2)*(((0:N-1)'-N/2)/(N/10)).^2);
-initialIntensity = initialIntensity/max(initialIntensity) + 2*rand(N,1);
-initialPhase = pi*rand(N,1)/3;
+initialIntensity = initialIntensity/max(initialIntensity) + rand(N,1);
+initialPhase = pi*rand(N,1);
 retrievedPulse = initialIntensity.*exp(1i.*initialPhase);
 [retrievedFROG, retrievedEFROG] = makeFROG(retrievedPulse);
 
@@ -31,7 +31,6 @@ brighten(0.4);
 % create some variables
 finalIterations = 1;
 rmsError = 1e10;
-testError = 1e10;
 iterationVector = [];
 errorVector = [];
 bestError = 1;
@@ -50,7 +49,7 @@ while (stopped == 0)
     else
         retrievedEFROG = retrievedEFROG.*(sqrt(originalFROG./retrievedFROG));
     end
-    
+
 	% extract pulse field from FROG complex amplitude
 	retrievedPulse = makePulse(retrievedEFROG,retrievedPulse,whichMethod); 
     
@@ -69,8 +68,8 @@ while (stopped == 0)
     % make a FROG trace from new fields
 	[retrievedFROG, retrievedEFROG] = makeFROG(retrievedPulse);
     
-	% scale the trace to minimize the error and calculate it
-	retrievedFROG = retrievedFROG * sum(sum(originalFROG.*retrievedFROG))/sum(sum(retrievedFROG.^2));
+	% normalize trace and calculate rms error
+    retrievedFROG = retrievedFROG/max(max(retrievedFROG));
 	rmsError = sqrt(mean(mean((originalFROG-retrievedFROG).^2)));
 
     % keeping track of error

@@ -21,14 +21,14 @@ end
 % now electricFROG is in the outer product form
 if (whichMethod == 0)
     % Power method
-	outputPulse = electricFROG*(electricFROG'*lastPulse);
+	outputPulse = electricFROG*electricFROG'*lastPulse;
 else
     % SVD method
     [U, S, V] = svds(electricFROG,1);
 	outputPulse = U;
 end
 
-% normalize to Euclidean norm 1
-outputPulse = outputPulse/norm(outputPulse);
+% normalize the pulse
+outputPulse = outputPulse/max(outputPulse);
 
 end

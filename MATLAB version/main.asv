@@ -8,21 +8,18 @@ close all;
 
 % fullRun = 1 runs 100 times without bootstrap to calculate mean pulse and
 % then 100 times with bootstrap to calculate errorbars, =0 just one time
-fullRun = 1;
-experimentalFROG = dlmread('../testfrog/60.txt');
-fileName = 'YAG 60';
+fullRun = 0;
 
 % set parameters of a trace
 N = 128;
-
-% 0.5, 0.7 for YVO
-scaleDelay = 1;
-scaleLambda = 0.4;
+scaleDelay = 0.5;
+scaleLambda = 0.0.;
 edgeFiltering = 0;
 mirror = 'none'; % symmetrize only when without it traces don't look similar
 flipPhase = 1; % for measuring n2 phase is flipped so the n2 sign is correct
 
-% prepare FROG trace for running the algorithm
+% read measured FROG from file
+experimentalFROG = dlmread('../testfrog/80.txt');
 [experimentalFROG, header] = denoiseFROG(experimentalFROG, edgeFiltering);
 [experimentalFROG, header] = resampleFROG(experimentalFROG, header, scaleDelay, scaleLambda, N);
 [experimentalFROG, delays, omegas] = switchDomain(experimentalFROG, header, N);
@@ -199,5 +196,5 @@ else
     xlim([-1000 1000]);
     
     % writing final result to file
-    dlmwrite(['.\fullruns\' fileName '.txt'], [denseDelays', intensity, phase, intensityError, phaseError], '\t');
+    dlmwrite(['.\fullruns\' '60 YAG' '.txt'], [denseDelays', intensity, phase, intensityError, phaseError], '\t');
 end
