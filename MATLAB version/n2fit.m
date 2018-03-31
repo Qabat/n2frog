@@ -1,3 +1,18 @@
+pulseToFit = dlmread('../../fullruns/YAG 60.txt');
+
+time = pulseToFit(:,1);
+intensity = pulseToFit(:,2);
+phase = pulseToFit(:,3);
+intensityError = pulseToFit(:,4);
+phaseError = pulseToFit(:,5);
+
+subplot(1,2,1)
+errorbar(time, intensity, intensityError);
+xlim([-500 500]);
+subplot(1,2,2)
+errorbar(time, phase, phaseError);
+
+
 % interpolate calibration phase for use in n2 reconstruction
 % calibrationPhase = dlmread('ref pulse.txt');
 % calibrationPhase = interp1(calibrationPhase(:,1), calibrationPhase(:,3), denseDelays, 'spline', 0);
