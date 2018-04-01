@@ -61,7 +61,7 @@ while (stopped == 0)
 
     % phase and intensity flip if n2 would come out negative
     flipRange = round(0.08*N);
-    if ((trapz(gradient(gradient(angle(retrievedPulse(round(N/2-flipRange/2):round(N/2+flipRange/2))))))>0) && (rmsError < 2e-2) && (flipPhase  == 1))
+    if ((trapz(gradient(gradient(angle(retrievedPulse(round(N/2-flipRange/2):round(N/2+flipRange/2))))))>0) && (rmsError < 1e-2) && (flipPhase  == 1))
         retrievedPulse = flipud(abs(retrievedPulse)).*exp(-1i*flipud(angle(retrievedPulse)));
     end
 

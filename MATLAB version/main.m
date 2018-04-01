@@ -9,15 +9,15 @@ close all;
 % fullRun = 1 runs 100 times without bootstrap to calculate mean pulse and
 % then 100 times with bootstrap to calculate errorbars, =0 just one time
 fullRun = 1;
-experimentalFROG = dlmread('../test data/60.txt');
-fileName = 'YAG 60';
+experimentalFROG = dlmread('../test data/100.txt');
+fileName = 'CALC 100e';
 
 % set parameters of a trace
 N = 128;
 
-% 0.5, 0.7 for YVO, 1, 0.4 for new measurements
-scaleDelay = 1;
-scaleLambda = 0.4;
+% 0.5, 0.6 for old, 1, 0.4 for new measurements
+scaleDelay = 0.5;
+scaleLambda = 0.6;
 edgeFiltering = 0;
 mirror = 'none'; % symmetrize only when without it traces don't look similar
 flipPhase = 1; % for measuring n2 phase is flipped so the n2 sign is correct
@@ -36,7 +36,7 @@ denseOmegas = linspace(omegas(1), omegas(end), 2^12);
 errorTolerance = 1e-3;
 maxIterations = 500;
 whichMethod = 0;
-howMany = 10;
+howMany = 100;
 
 if ~fullRun
     hidePlots = 0;
@@ -106,11 +106,11 @@ else
         % collecting data for calculating errors
         intensities = [intensities file(:,2)];
         phases = [phases file(:,3)];
-        weights = [weights (1/file(1,7)).^2];
+        weights = [weights (1/file(1,7)).^4];
 
     end
 
-    % calculating pulse as a weighter average of 100 runs without bootstrap
+    % calculating pulse as a weighted average of 100 runs without bootstrap
     intensity = sum(weights.*intensities, 2)/sum(weights);
     phase = sum(weights.*phases, 2)/sum(weights);
     phase(intensity < 0.1) = NaN; % phase blanking
@@ -185,6 +185,12 @@ else
         weights = [weights (1/file(1,7)).^2];
 
     end
+    
+    % plot average on top of bootstrap
+    subplot(1,2,1)
+    plot(denseDelays, intensity*pi, 'LineWidth', 3);
+    hold on
+    plot(denseDelays, phase+pi/2, 'LineWidth', 3);
     
     % calculating and plotting errors (bootstrap method)
     intensityError = std(intensities, 0, 2);
