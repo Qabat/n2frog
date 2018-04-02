@@ -3,8 +3,8 @@ clear;
 close all; 
 
 % which pulse to fit
-reference = 'ref2';
-sample = 'YAG 60';
+reference = 'ref2s';
+sample = 'YAG 60 2';
 
 % experimental parameters
 n = 1.8153;     % linear index of refraction
@@ -51,48 +51,65 @@ xlabel('time [fs]');
 ylabel('phase [rad]');
 
 % calculating theoretical phase change from intensity profile with n2 = 1
+intensityError = intensityError/trapz(1e-15*time, intensity);
 intensity = intensity/trapz(1e-15*time, intensity);
-tPhase = intensity * ((P*1e-3)/(R*1e3)) * (d*1e-3) * ((2/(lambda*1e-9))/(w*1e-6)^2);
-fulltPhase = tPhase;
+almostPhase = intensity * ((P*1e-3)/(R*1e3)) * (d*1e-3) * ((2/(lambda*1e-9))/(w*1e-6)^2);
+almostPhaseError = intensityError * ((P*1e-3)/(R*1e3)) * (d*1e-3) * ((2/(lambda*1e-9))/(w*1e-6)^2);
+fullAlmostPhase = almostPhase;
 fullTime = time;
 
 % cut data to the size of phase vector
 time(isnan(phase)) = [];
-tPhase(isnan(phase)) = [];
-tPhase = tPhase - max(tPhase);
+intensity(isnan(phase)) = [];
+almostPhase(isnan(phase)) = [];
+almostPhase = almostPhase - max(almostPhase);
 intensityError(isnan(phase)) = [];
+almostPhaseError(isnan(phase)) = [];
 phaseError(isnan(phase)) = [];
 phase(isnan(phase)) = [];
 
-% fitting curves without errors for now
-n2 = lsqcurvefit(@(n2, tPhase) n2 * tPhase, 3e-20, tPhase, phase);
+% effective variance approximation weighted least squares fitting
+weights = 1./phaseError.^2;
+n2 = lscov(almostPhase, phase, weights);
+
+for ii = 1:5
+    weights = 1./(phaseError.^2 + n2^2 * almostPhaseError.^2);
+    n2 = lscov(almostPhase, phase, weights);
+end
+
+[n2, std, mse, S] = lscov(almostPhase, phase, weights)
+
+subplot(2,2,2);
+errorbar(almostPhase, phase, phaseError, phaseError, almostPhaseError, almostPhaseError,'o')
+hold on
+plot(almostPhase, n2*almostPhase, 'LineWidth', 3);
+title('Fitting phases to each other');
+xlabel('almost phase [rad*W/cm^2]');
+ylabel('phase [rad]');
+
 % b³¹d eskperymentalny
 errExp = n2 * sqrt((errlambda/lambda)^2 + (errd/d)^2 + (errP/P)^2 + 4*(errw/w)^2);
 % b³¹d fitowania
-errFit = 0;
+errFit = std;
 % b³¹d ca³kowity
 errn2 = sqrt(errExp^2 + errFit^2);
 
-% b³¹d w labview liczony by³ jako iloczyn kowariancji i residuum
-% dodatkowo by³ liczony b³¹d eksperymentalny
-% tu jako kolejne Ÿród³o b³êdu trzeba uwzglêdniæ b³edy z bootstrapa
-
 % plotting fit
-subplot(1,2,2)
-fulltPhase = n2 * fulltPhase;
-plot(fullTime, fulltPhase);
+subplot(2,2,4)
+fullAlmostPhase = n2 * fullAlmostPhase;
+plot(fullTime, fullAlmostPhase);
 hold on
-plot(time, phase + max(fulltPhase));
+plot(time, phase + max(fullAlmostPhase));
 xlim([-1000 1000]);
-ylim([0 max(fulltPhase) + 0.1]);
-title('Phase fitting');
+ylim([0 max(fullAlmostPhase) + 0.1]);
+title('Fitted phases');
 xlabel('time [fs]');
 ylabel('phase [rad]');
 
-display(n2*1e20)
-display(errn2*1e20)
+display(n2*1e20);
+display(errn2*1e20);
 
-temp = (length(fulltPhase)-length(phase))/2;
+temp = (length(fullAlmostPhase)-length(phase))/2;
 nany = NaN(temp);
 phase = [nany(1,:)  phase'  nany(1,:)]';
-dlmwrite(['../../fits/' sample ' ' num2str(n2*1e20) ' ' num2str(errn2*1e20) '.txt'], [fullTime, fulltPhase, phase+max(fulltPhase)], '\t');
+dlmwrite(['../../fits/' sample ' ' num2str(n2*1e20) ' ' num2str(errn2*1e20) '.txt'], [fullTime, fullAlmostPhase, phase+max(fullAlmostPhase)], '\t');

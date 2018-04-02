@@ -9,15 +9,15 @@ close all;
 % fullRun = 1 runs 100 times without bootstrap to calculate mean pulse and
 % then 100 times with bootstrap to calculate errorbars, =0 just one time
 fullRun = 1;
-experimentalFROG = dlmread('../test data/100.txt');
-fileName = 'CALC 100e';
+experimentalFROG = dlmread('../test data/60.txt');
+fileName = 'YAG 60 2';
 
 % set parameters of a trace
 N = 128;
 
 % 0.5, 0.6 for old, 1, 0.4 for new measurements
-scaleDelay = 0.5;
-scaleLambda = 0.6;
+scaleDelay = 1;
+scaleLambda = 0.4;
 edgeFiltering = 0;
 mirror = 'none'; % symmetrize only when without it traces don't look similar
 flipPhase = 1; % for measuring n2 phase is flipped so the n2 sign is correct
@@ -29,8 +29,8 @@ flipPhase = 1; % for measuring n2 phase is flipped so the n2 sign is correct
 experimentalFROG = mirrorFROG(experimentalFROG, mirror);
 
 % for smooth plots
-denseDelays = linspace(delays(1), delays(end), 2^12);
-denseOmegas = linspace(omegas(1), omegas(end), 2^12);
+denseDelays = linspace(delays(1), delays(end), 2^9);
+denseOmegas = linspace(omegas(1), omegas(end), 2^9);
 
 % input parameters for FROG algorithm
 errorTolerance = 1e-3;
