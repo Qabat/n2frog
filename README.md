@@ -2,7 +2,8 @@
 
 This program will take measured SHG FROG spectrogram and some experimental parameters as input and give n2 with error as output for particular measured material.
 
-FROG algorithm with bootstrap implemented is working correctly in MATLAB. Now n2 fitting procedure is being developed. After everything works properly in matlab it will be rewritten in Python in the future.
+FROG algorithm with bootstrap implemented is working correctly in MATLAB.
+After everything works properly in matlab it will be rewritten in Python in the future.
 
 Main part of this software (FROG algorithm) is based on:
 
