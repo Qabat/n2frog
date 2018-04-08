@@ -54,14 +54,13 @@ while (stopped == 0)
 	retrievedPulse = makePulse(retrievedEFROG,retrievedPulse,whichMethod); 
     
     % set center of mass of a pulse to zero delay and zero phase at center of mass
-    tau = sum(delays' .* abs(retrievedPulse).^2)/sum(abs(retrievedPulse).^2);
-    retrievedPulse = ifftshift(ifft(ifftshift(fftshift(fft(fftshift(retrievedPulse))).*exp(-1i.*omegas'.*tau))));
+    tau = -sum(delays' .* abs(retrievedPulse).^2)/sum(abs(retrievedPulse).^2);
+    retrievedPulse = ifftshift(ifft(ifftshift(fftshift(fft(fftshift(retrievedPulse))).*exp(1i.*omegas'.*tau))));
     [~, centerPulse] = max(abs(retrievedPulse).^2);
     retrievedPulse = retrievedPulse./retrievedPulse(centerPulse);
 
     % phase and intensity flip if n2 would come out negative
-    flipRange = round(0.08*N);
-    if ((trapz(gradient(gradient(angle(retrievedPulse(round(N/2-flipRange/2):round(N/2+flipRange/2))))))>0) && (rmsError < 1e-2) && (flipPhase  == 1))
+    if ((trapz(gradient(gradient(angle(retrievedPulse(abs(retrievedPulse).^2 > 0.1)))))>0) && (finalIterations > maxIterations/5) && (flipPhase  == 1))
         retrievedPulse = flipud(abs(retrievedPulse)).*exp(-1i*flipud(angle(retrievedPulse)));
     end
 
@@ -77,7 +76,7 @@ while (stopped == 0)
     errorVector = [errorVector; rmsError];
     
     % best pulse
-    if (rmsError < bestError)
+    if ((rmsError < bestError) && (finalIterations > maxIterations/5))
         bestError = rmsError;
         bestFROG = retrievedFROG;
         bestPulse = retrievedPulse;
@@ -101,7 +100,7 @@ while (stopped == 0)
     
     % draw the plots
     if (hidePlots == 0)
-        
+
         figure(mainFigure)
         
         % original FROG trace plot
@@ -109,7 +108,6 @@ while (stopped == 0)
         h = pcolor(delays, 1000*omegas, sqrt(originalFROG));
         set(h, 'EdgeColor', 'none');
         caxis([0.01 1])
-        shading interp
         title('Original FROG trace');
         xlabel('Delay [fs]');
         ylabel('Signal frequency [THz]');
@@ -120,7 +118,6 @@ while (stopped == 0)
         h = pcolor(delays, 1000*omegas, sqrt(retrievedFROG));
         set(h, 'EdgeColor', 'none');
         caxis([0.01 1])
-        shading interp
 		title('Reconstructed FROG trace');
 		xlabel('Delay [fs]');
 		ylabel('Signal frequency [THz]');
@@ -128,10 +125,9 @@ while (stopped == 0)
         
         % difference between original and retrieved
         subplot(2,3,3)
-        h = pcolor(delays, 1000*omegas, abs(sqrt(originalFROG)-sqrt(retrievedFROG)));
+        h = pcolor(delays, 1000*omegas, sqrt(originalFROG)-sqrt(retrievedFROG));
         set(h, 'EdgeColor', 'none');
         caxis([0.01 0.1])
-        shading interp
 		title('Difference between FROG traces');
 		xlabel('Delay [fs]');
 		ylabel('Signal frequency [THz]');
@@ -163,7 +159,7 @@ while (stopped == 0)
         set(gca, 'YScale', 'log')
         
 		drawnow;
-
+        % print(gcf,'foo.png','-dpng','-r600');         
         % pressing q ends the program
 		if (strcmp(get(mainFigure,'CurrentCharacter'),'q')) close all; break; end
         

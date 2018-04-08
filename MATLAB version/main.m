@@ -8,9 +8,9 @@ close all;
 
 % fullRun = 1 runs 100 times without bootstrap to calculate mean pulse and
 % then 100 times with bootstrap to calculate errorbars, =0 just one time
-fullRun = 1;
+fullRun = 0;
 experimentalFROG = dlmread('../test data/60.txt');
-fileName = 'YAG 60 2';
+fileName = 'YAG 60 3';
 
 % set parameters of a trace
 N = 128;
@@ -18,25 +18,25 @@ N = 128;
 % 0.5, 0.6 for old, 1, 0.4 for new measurements
 scaleDelay = 1;
 scaleLambda = 0.4;
-edgeFiltering = 0;
-mirror = 'none'; % symmetrize only when without it traces don't look similar
+edgeFiltering = 38;
+mirror = 'both';
 flipPhase = 1; % for measuring n2 phase is flipped so the n2 sign is correct
 
 % prepare FROG trace for running the algorithm
 [experimentalFROG, header] = denoiseFROG(experimentalFROG, edgeFiltering);
 [experimentalFROG, header] = resampleFROG(experimentalFROG, header, scaleDelay, scaleLambda, N);
 [experimentalFROG, delays, omegas] = switchDomain(experimentalFROG, header, N);
-experimentalFROG = mirrorFROG(experimentalFROG, mirror);
+experimentalFROG = mirrorFROG(experimentalFROG, delays, omegas, mirror);
 
 % for smooth plots
-denseDelays = linspace(delays(1), delays(end), 2^9);
-denseOmegas = linspace(omegas(1), omegas(end), 2^9);
+denseDelays = linspace(delays(1), delays(end), 2^7);
+denseOmegas = linspace(omegas(1), omegas(end), 2^7);
 
 % input parameters for FROG algorithm
 errorTolerance = 1e-3;
 maxIterations = 500;
 whichMethod = 0;
-howMany = 100;
+howMany = 10;
 
 if ~fullRun
     hidePlots = 0;
@@ -106,7 +106,7 @@ else
         % collecting data for calculating errors
         intensities = [intensities file(:,2)];
         phases = [phases file(:,3)];
-        weights = [weights (1/file(1,7)).^4];
+        weights = [weights (1/file(1,7)).^2];
 
     end
 
@@ -119,15 +119,13 @@ else
     hold on
     plot(denseDelays, phase);
 
-    hidePlots = 1;
     useBootstrap = 1; % when using bootstrap for calculating errors make howMany = 100
     for n = 1:howMany
         
         disp([num2str(n) 'b']);
         
         % main algorithm
-        [retrievedPulse, retrievedFROG, finalError, finalIterations] = algoFROG(experimentalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap);
-
+        [retrievedPulse, retrievedFROG, finalError, finalIterations] = algoFROG(experimentalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap);                
         % smooth out the pulse
         retrievedIntensity = abs(retrievedPulse).^2;
         retrievedPhase = angle(retrievedPulse);
@@ -178,19 +176,24 @@ else
         hold on
         plot(file(:,4), file(:,6)+pi/2)
         xlim([-50 50]);
+            title('Bootstrap in frequency');
+    xlabel('frequency [THz]');
+    ylabel('phase [rad]');
 
         % collecting data for calculating errors
         intensities = [intensities file(:,2)];
         phases = [phases file(:,3)];
-        weights = [weights (1/file(1,7)).^2];
 
     end
     
     % plot average on top of bootstrap
     subplot(1,2,1)
-    plot(denseDelays, intensity*pi, 'LineWidth', 3);
+    plot(denseDelays, intensity*pi, 'r', 'LineWidth', 3);
     hold on
-    plot(denseDelays, phase+pi/2, 'LineWidth', 3);
+    plot(denseDelays, phase+pi/2, 'r', 'LineWidth', 3);
+    title('Bootstrap in time');
+    xlabel('time [fs]');
+    ylabel('phase [rad]');
     
     % calculating and plotting errors (bootstrap method)
     intensityError = std(intensities, 0, 2);
