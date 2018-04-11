@@ -46,7 +46,7 @@ omegaFROG = circshift(omegaFROG, [0 -abs(N/2-maxIndex)]);
 spectralMarginal = sum(omegaFROG, 2);
 cmShift = sum(newOmega' .* abs(spectralMarginal))/sum(abs(spectralMarginal));
 cmIndex = find(abs(cmShift - newOmega) <= abs(newOmega(1)-newOmega(2))/2);
-omegaFROG = circshift(omegaFROG, [round(N/2-cmIndex) 0]);
+omegaFROG = circshift(omegaFROG, [round(N/2-cmIndex)-1 0]);
 
 % normalize
 omegaFROG = omegaFROG/max(max(omegaFROG));

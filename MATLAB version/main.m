@@ -42,6 +42,13 @@ if ~fullRun
     hidePlots = 0;
     useBootstrap = 0;
 	[retrievedPulse, retrievedFROG, finalError, finalIterations] = algoFROG(experimentalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap);
+    retrievedIntensity = abs(retrievedPulse).^2;
+    retrievedPhase = angle(retrievedPulse);
+    retrievedSPulse = fftshift(fft(fftshift(retrievedPulse)));
+    retrievedSpectrum = abs(retrievedSPulse).^2;
+    retrievedSPhase = angle(retrievedSPulse);
+    outputFile = [delays' retrievedIntensity retrievedPhase 1000*omegas' retrievedSpectrum retrievedSPhase finalError*ones(length(delays),1)];
+    dlmwrite('../../output/testrun.txt', outputFile, '\t');
 else
 	hidePlots = 1;
     useBootstrap = 0; % when using bootstrap for calculating errors make howMany = 100
