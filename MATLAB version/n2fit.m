@@ -3,8 +3,8 @@ clear;
 close all; 
 
 % which pulse to fit
-reference = 'ref2s';
-sample = 'YAG 60 2';
+reference = 'ref2';
+sample = 'YAG 60 test';
 
 % experimental parameters
 n = 1.8153;     % linear index of refraction

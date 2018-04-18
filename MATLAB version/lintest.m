@@ -13,25 +13,33 @@
 % hold on
 % plot(detrend(sum)-max(detrend(sum)), '*')
 
-pulse0 = dlmread('../../porownanie faz do odjecia liniowego skladnika/0.txt');
-pulse1 = dlmread('../../porownanie faz do odjecia liniowego skladnika/1.txt');
-pulse11 = dlmread('../../porownanie faz do odjecia liniowego skladnika/-1.txt');
+pulse0 = dlmread('../../porownanie faz do odjecia liniowego skladnika/1.txt');
+pulse1 = dlmread('../../porownanie faz do odjecia liniowego skladnika/2.txt');
+pulse11 = dlmread('../../porownanie faz do odjecia liniowego skladnika/3.txt');
 
 phase0 = pulse0(:,3);
 phase1 = pulse1(:,3);
 phase11 = pulse11(:,3);
 
-intensity0 = pulse0(:,2);
-intensity1 = pulse1(:,2);
-intensity11 = pulse11(:,2);
+% intensity0 = pulse0(:,2);
+% intensity1 = pulse1(:,2);
+% intensity11 = pulse11(:,2);
 
-phase0(intensity0 < 0.1) = [];
-phase1(intensity1 < 0.1) = [];
-phase11(intensity11 < 0.1) = [];
+% phase0(intensity0 < 0.1) = [];
+% phase1(intensity1 < 0.1) = [];
+% phase11(intensity11 < 0.1) = [];
 
-phase0 = phase0 - max(phase0);
-phase1 = phase1 - max(phase1);
-phase11 = phase11 - max(phase11);
+% phase0 = phase0 - max(phase0);
+% phase1 = phase1 - max(phase1);
+% phase11 = phase11 - max(phase11);
+
+phase0 = unwrap(phase0);
+phase1 = unwrap(phase1);
+phase11 = unwrap(phase11);
+
+phase0 = phase0 - phase0(64);
+phase1 = phase1 - phase1(64);
+phase11 = phase11 - phase11(64);
 
 figure()
 hold on
@@ -43,47 +51,51 @@ Dphase0 = detrend(phase0);
 Dphase1 = detrend(phase1);
 Dphase11 = detrend(phase11);
 
-Dphase0 = Dphase0 - max(Dphase0);
-Dphase1 = Dphase1 - max(Dphase1);
-Dphase11 = Dphase11 - max(Dphase11);
+% Dphase0 = Dphase0 - max(Dphase0);
+% Dphase1 = Dphase1 - max(Dphase1);
+% Dphase11 = Dphase11 - max(Dphase11);
+
+Dphase0 = Dphase0 - Dphase0(64);
+Dphase1 = Dphase1 - Dphase1(64);
+Dphase11 = Dphase11 - Dphase11(64);
 
 plot(Dphase0+1,'*');
 plot(Dphase1+1,'*');
 plot(Dphase11+1,'*');
 % hold off
 
-intensity0(intensity0 < 0.1) = [];
-intensity1(intensity1 < 0.1) = [];
-intensity11(intensity11 < 0.1) = [];
+% intensity0(intensity0 < 0.1) = [];
+% intensity1(intensity1 < 0.1) = [];
+% intensity11(intensity11 < 0.1) = [];
 
 % figure()
 % hold on
-
-intensity0 = intensity0 - intensity0(1);
-intensity1 = intensity1 - intensity1(1);
-intensity11 = intensity11 - intensity11(1);
-
-intensity0 = intensity0 / max(intensity0);
-intensity1 = intensity1 / max(intensity1);
-intensity11 = intensity11 / max(intensity11);
-
-plot(intensity0,'--');
-plot(intensity1,'--');
-plot(intensity11,'--');
-
-Dintensity0 = detrend(intensity0);
-Dintensity1 = detrend(intensity1);
-Dintensity11 = detrend(intensity11);
-
-Dintensity0 = Dintensity0 - Dintensity0(1);
-Dintensity1 = Dintensity1 - Dintensity1(1);
-Dintensity11 = Dintensity11 - Dintensity11(1);
-
-Dintensity0 = Dintensity0 / max(Dintensity0);
-Dintensity1 = Dintensity1 / max(Dintensity1);
-Dintensity11 = Dintensity11 / max(Dintensity11);
-
-plot(Dintensity0,'o');
-plot(Dintensity1,'o');
-plot(Dintensity11,'o');
-hold off
+% 
+% intensity0 = intensity0 - intensity0(1);
+% intensity1 = intensity1 - intensity1(1);
+% intensity11 = intensity11 - intensity11(1);
+% 
+% intensity0 = intensity0 / max(intensity0);
+% intensity1 = intensity1 / max(intensity1);
+% intensity11 = intensity11 / max(intensity11);
+% 
+% plot(intensity0,'--');
+% plot(intensity1,'--');
+% plot(intensity11,'--');
+% 
+% Dintensity0 = detrend(intensity0);
+% Dintensity1 = detrend(intensity1);
+% Dintensity11 = detrend(intensity11);
+% 
+% Dintensity0 = Dintensity0 - Dintensity0(1);
+% Dintensity1 = Dintensity1 - Dintensity1(1);
+% Dintensity11 = Dintensity11 - Dintensity11(1);
+% 
+% Dintensity0 = Dintensity0 / max(Dintensity0);
+% Dintensity1 = Dintensity1 / max(Dintensity1);
+% Dintensity11 = Dintensity11 / max(Dintensity11);
+% 
+% plot(Dintensity0,'o');
+% plot(Dintensity1,'o');
+% plot(Dintensity11,'o');
+% hold off

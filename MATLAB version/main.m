@@ -8,9 +8,9 @@ close all;
 
 % fullRun = 1 runs 100 times without bootstrap to calculate mean pulse and
 % then 100 times with bootstrap to calculate errorbars, =0 just one time
-fullRun = 0;
+fullRun = 1;
 experimentalFROG = dlmread('../test data/60.txt');
-fileName = 'YAG 60 3';
+fileName = 'YAG 60 test';
 
 % set parameters of a trace
 N = 128;
@@ -18,7 +18,7 @@ N = 128;
 % 0.5, 0.6 for old, 1, 0.4 for new measurements
 scaleDelay = 1;
 scaleLambda = 0.4;
-edgeFiltering = 38;
+edgeFiltering = 0;
 mirror = 'both';
 flipPhase = 1; % for measuring n2 phase is flipped so the n2 sign is correct
 
@@ -36,7 +36,6 @@ denseOmegas = linspace(omegas(1), omegas(end), 2^7);
 errorTolerance = 1e-3;
 maxIterations = 500;
 whichMethod = 0;
-howMany = 10;
 
 if ~fullRun
     hidePlots = 0;
@@ -52,6 +51,8 @@ if ~fullRun
 else
 	hidePlots = 1;
     useBootstrap = 0; % when using bootstrap for calculating errors make howMany = 100
+    howMany = 10;
+    errorsss = [];
     for n = 1:howMany
         
         disp(num2str(n));
@@ -116,7 +117,17 @@ else
         weights = [weights (1/file(1,7)).^2];
 
     end
-
+    
+    % remove outliers
+    errorTreshold = 10;
+    avgPhase = mean(phases, 2);
+    for n=1:howMany
+        display(sqrt(mean((phases(:,n) - avgPhase).^2)));
+        if (sqrt(mean((phases(:,n) - avgPhase).^2)) > errorTreshold)
+            phases(:,n) = [];
+        end
+    end
+    
     % calculating pulse as a weighted average of 100 runs without bootstrap
     intensity = sum(weights.*intensities, 2)/sum(weights);
     phase = sum(weights.*phases, 2)/sum(weights);
@@ -127,6 +138,7 @@ else
     plot(denseDelays, phase);
 
     useBootstrap = 1; % when using bootstrap for calculating errors make howMany = 100
+    howMany = 100;
     for n = 1:howMany
         
         disp([num2str(n) 'b']);
@@ -183,9 +195,9 @@ else
         hold on
         plot(file(:,4), file(:,6)+pi/2)
         xlim([-50 50]);
-            title('Bootstrap in frequency');
-    xlabel('frequency [THz]');
-    ylabel('phase [rad]');
+        title('Bootstrap in frequency');
+        xlabel('frequency [THz]');
+        ylabel('phase [rad]');
 
         % collecting data for calculating errors
         intensities = [intensities file(:,2)];
@@ -201,6 +213,16 @@ else
     title('Bootstrap in time');
     xlabel('time [fs]');
     ylabel('phase [rad]');
+    
+    % remove outliers
+    errorTreshold = 10;
+    avgBootstrapPhase = mean(phases, 2);
+    for n=1:howMany
+        display(sqrt(mean((phases(:,n) - avgBootstrapPhase).^2)));
+        if (sqrt(mean((phases(:,n) - avgBootstrapPhase).^2)) > errorTreshold)
+            phases(:,n) = [];
+        end
+    end
     
     % calculating and plotting errors (bootstrap method)
     intensityError = std(intensities, 0, 2);
