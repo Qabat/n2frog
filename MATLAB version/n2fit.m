@@ -3,8 +3,9 @@ clear;
 close all; 
 
 % which pulse to fit
-reference = 'ref2';
+reference = 'ref2 test';
 sample = 'YAG 60 test';
+initialGuess = 7.5e-20;
 
 % experimental parameters
 n = 1.8153;     % linear index of refraction
@@ -32,20 +33,20 @@ phaseError = pulseToFit(:,5);
 
 % subtract calibration phase
 phase = phase - calibrationPhase;
-phase = phase - max(phase);
 phaseError = sqrt(phaseError.^2 + calibrationPhaseError.^2);
 
-% plotting input pulse
+% plotting input pulse with SPM phase only
 figure('Position',[150 75 1600 900]);
 subplot(2,2,1)
 errorbar(time, intensity, intensityError);
-xlim([-1000 1000]);
+xlim([-500 500]);
 ylim([0 1.2]);
 title('Intensity');
 xlabel('time [fs]');
 ylabel('normalized intensity');
-subplot(2,2,3)
+subplot(2,2,2)
 errorbar(time, phase, phaseError);
+xlim([-500 500]);
 title('Phase');
 xlabel('time [fs]');
 ylabel('phase [rad]');
@@ -62,54 +63,89 @@ fullTime = time;
 time(isnan(phase)) = [];
 intensity(isnan(phase)) = [];
 almostPhase(isnan(phase)) = [];
-almostPhase = almostPhase - max(almostPhase);
 intensityError(isnan(phase)) = [];
 almostPhaseError(isnan(phase)) = [];
 phaseError(isnan(phase)) = [];
 phase(isnan(phase)) = [];
 
-% effective variance approximation weighted least squares fitting
-weights = 1./phaseError.^2;
-n2 = lscov(almostPhase, phase, weights);
 
-for ii = 1:5
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ITERATIVE NONLINEAR REGRESSION
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+weights = 1./phaseError.^2;
+n2FitFun = @(b, x) b*x;
+linearFitFun = @(b, x) x(:,1) + b*x(:,2);
+constFitFun = @(b, x) x + b;
+const = 1;
+
+% initially set both to max = 0
+almostPhase = almostPhase - max(almostPhase);
+phase = phase - max(phase);
+
+n2Model = fitnlm(almostPhase, phase, n2FitFun, initialGuess, 'Weights', weights);
+n2 = n2Model.Coefficients.Estimate(1);
+
+while (const > 0.0001)
+
+for ii = 1:3
     weights = 1./(phaseError.^2 + n2^2 * almostPhaseError.^2);
-    n2 = lscov(almostPhase, phase, weights);
+    n2Model = fitnlm(almostPhase, phase, n2FitFun, initialGuess, 'Weights', weights);
+    n2 = n2Model.Coefficients.Estimate(1);
 end
 
-[n2, std, mse, S] = lscov(almostPhase, phase, weights)
+constModel = fitnlm(n2*almostPhase, phase, constFitFun, 0.001, 'Weights', weights);
+const = constModel.Coefficients.Estimate(1);
+phase = phase - const;
 
-subplot(2,2,2);
+linearModel = fitnlm([n2*almostPhase time], phase, linearFitFun, 0.001, 'Weights', weights);
+linear = linearModel.Coefficients.Estimate(1);
+phase = phase - linear * time;
+
+constModel = fitnlm(n2*almostPhase, phase, constFitFun, 0.001, 'Weights', weights);
+const = constModel.Coefficients.Estimate(1);
+phase = phase - const;
+
+end
+
+n2Model = fitnlm(almostPhase, phase, n2FitFun, initialGuess, 'Weights', weights);
+n2 = n2Model.Coefficients.Estimate(1);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% experimental error
+errExp = n2 * sqrt((errlambda/lambda)^2 + (errd/d)^2 + (errP/P)^2 + 4*(errw/w)^2);
+% fitting error
+errFit = n2Model.Coefficients.SE(1);
+% total error
+errn2 = sqrt(errExp^2 + errFit^2);
+
+% plotting fit
+subplot(2,2,3);
 errorbar(almostPhase, phase, phaseError, phaseError, almostPhaseError, almostPhaseError,'o')
 hold on
 plot(almostPhase, n2*almostPhase, 'LineWidth', 3);
 title('Fitting phases to each other');
 xlabel('almost phase [rad*W/cm^2]');
 ylabel('phase [rad]');
-
-% b³¹d eskperymentalny
-errExp = n2 * sqrt((errlambda/lambda)^2 + (errd/d)^2 + (errP/P)^2 + 4*(errw/w)^2);
-% b³¹d fitowania
-errFit = std;
-% b³¹d ca³kowity
-errn2 = sqrt(errExp^2 + errFit^2);
-
-% plotting fit
 subplot(2,2,4)
+phase = phase + max(n2 * fullAlmostPhase);
 fullAlmostPhase = n2 * fullAlmostPhase;
 plot(fullTime, fullAlmostPhase);
+xlim([-500 500]);
 hold on
-plot(time, phase + max(fullAlmostPhase));
-xlim([-1000 1000]);
-ylim([0 max(fullAlmostPhase) + 0.1]);
+plot(time, phase);
+xlim([-500 500]);
 title('Fitted phases');
 xlabel('time [fs]');
 ylabel('phase [rad]');
 
-display(n2*1e20);
-display(errn2*1e20);
+% showing results on the console
+disp(['sample: ' sample]);
+disp(['n2: ' num2str(n2*1e20)]);
+disp(['n2error: ' num2str(errn2*1e20)]);
 
-temp = (length(fullAlmostPhase)-length(phase))/2;
-nany = NaN(temp);
-phase = [nany(1,:)  phase'  nany(1,:)]';
-dlmwrite(['../../fits/' sample ' ' num2str(n2*1e20) ' ' num2str(errn2*1e20) '.txt'], [fullTime, fullAlmostPhase, phase+max(fullAlmostPhase)], '\t');
+% saving to file
+time = [time; NaN([length(fullTime)-length(time), 1])];
+phase = [phase; NaN([length(fullAlmostPhase)-length(phase), 1])];
+dlmwrite(['../../fits/' sample ' ' num2str(n2*1e20) ' ' num2str(errn2*1e20) '.txt'], [fullTime, fullAlmostPhase, time, phase+max(fullAlmostPhase)], '\t');
