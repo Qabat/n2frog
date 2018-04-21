@@ -31,8 +31,8 @@ experimentalFROG = mirrorFROG(experimentalFROG, delays, omegas, mirror);
 errorTolerance = 1e-3;
 maxIterations = 500;
 whichMethod = 0; % 0 for power method, 1 for SVD method
-normalRuns = 3;
-bootstrapRuns = 10;
+normalRuns = 30;
+bootstrapRuns = 100;
 outlierTreshold = 10;
 
 % main thing
