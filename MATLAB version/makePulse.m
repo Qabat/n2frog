@@ -29,6 +29,6 @@ else
 end
 
 % normalize the pulse
-outputPulse = outputPulse/max(outputPulse);
+outputPulse = (abs(outputPulse)/max(abs(outputPulse))).*exp(1i.*angle(outputPulse));
 
 end
