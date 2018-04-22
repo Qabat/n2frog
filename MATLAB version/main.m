@@ -9,7 +9,7 @@ close all;
 % general settings
 fullRun = 1;
 experimentalFROG = dlmread('../test data/60.txt');
-fileName = 'YAG 60 test';
+fileName = 'YAG 60';
 
 % set parameters of a trace
 N = 128;
@@ -33,7 +33,7 @@ maxIterations = 500;
 whichMethod = 0; % 0 for power method, 1 for SVD method
 normalRuns = 30;
 bootstrapRuns = 100;
-outlierTreshold = 10;
+outlierTreshold = 8;
 
 % main thing
 if ~fullRun
@@ -47,9 +47,12 @@ if ~fullRun
     retrievedSPhase = angle(retrievedSPulse);
     outputFile = [delays' retrievedIntensity retrievedPhase 1000*omegas' retrievedSpectrum retrievedSPhase finalError*ones(length(delays),1)];
     dlmwrite('../../output/testrun.txt', outputFile, '\t');
-else
+else % normal runs
 	hidePlots = 1;
     useBootstrap = 0;
+    intensities = [];
+    phases = [];
+    errors = [];
     for n = 1:normalRuns
         
         disp(['Current run: ' num2str(n)]);
@@ -57,74 +60,58 @@ else
         % main algorithm
         [retrievedPulse, retrievedFROG, finalError, finalIterations] = algoFROG(experimentalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap);
 
-        % smooth out the pulse
+        % save pulse to file
         retrievedIntensity = abs(retrievedPulse).^2;
         retrievedPhase = angle(retrievedPulse);
         retrievedSPulse = fftshift(fft(fftshift(retrievedPulse)));
         retrievedSpectrum = abs(retrievedSPulse).^2;
         retrievedSPhase = angle(retrievedSPulse);
         retrievedIntensity = abs(retrievedIntensity/max(retrievedIntensity));
-        retrievedSpectrum = abs(retrievedSpectrum/max(retrievedSpectrum));
-
-        % set max intensity at at zero and zero phase at max phase
-        [~, maxIntensity] = max(retrievedIntensity);
-        retrievedIntensity = circshift(retrievedIntensity, length(delays)/2-maxIntensity);
-        retrievedPhase = circshift(retrievedPhase, length(delays)/2-maxIntensity);
-        delays = delays - delays(length(delays)/2);
-        retrievedPhase = unwrap(retrievedPhase);
-        width = 0.05*length(retrievedPhase);
-        temp = retrievedPhase(round((length(retrievedPhase)-width)/2):round((length(retrievedPhase)+width)/2));
-        retrievedPhase = retrievedPhase - max(temp);
-
-        % save pulse to file
+        retrievedSpectrum = abs(retrievedSpectrum/max(retrievedSpectrum));      
         outputFile = [delays' retrievedIntensity retrievedPhase 1000*omegas' retrievedSpectrum retrievedSPhase finalError*ones(length(delays),1)];
         dlmwrite(['../../output/normal/' num2str(n) '.txt'], outputFile, '\t');
 
-    end
-
-    % compare retrieved pulses
-    intensities = [];
-    phases = [];
-    errors = [];
-    for n=1:normalRuns
-        
-        file = dlmread(['../../output/normal/' num2str(n) '.txt']);
-
-%         % plotting results of multiple FROG runs
-%         figure()
-%         subplot(1,2,1)
-%         plot(file(:,1),file(:,2)*pi)
-%         hold on
-%         plot(file(:,1), file(:,3)+pi/2)
-%         xlim([-1000 1000]);
-%         subplot(1,2,2)
-%         plot(file(:,4),file(:,5)*pi)
-%         hold on
-%         plot(file(:,4), file(:,6)+pi/2)
-%         xlim([-50 50]);
-
-        % collecting data for calculating errors
-        intensities = [intensities file(:,2)];
-        phases = [phases file(:,3)];
-        errors = [errors file(1,7)];
-
+        intensities = [intensities retrievedIntensity];
+        phases = [phases retrievedPhase];
+        errors = [errors finalError];
     end
     
-    % calculating pulse as a weighted average of 10 runs without bootstrap
+    % picking the pulse with lowest error
     [minError, minIndex] = min(errors);
     intensity = intensities(:, minIndex);
     phase = phases(:, minIndex);    
-    phase(intensity < 0.2) = NaN; % phase blanking
-    
-    useBootstrap = 1; % when using bootstrap for calculating errors make howMany = 100
+
+    % bootstrap runs
+    useBootstrap = 1;
     for n = 1:bootstrapRuns
         
         disp(['Current run: ' num2str(n) 'b']);
         
         % main algorithm
         [retrievedPulse, retrievedFROG, finalError, finalIterations] = algoFROG(experimentalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap);                
+
+        % maximizing temporal pulse overlap
+        bestOverlap = 1000;
+        bestTau = 0;
+        for tau = -200:200
+            
+            overlapPulse = ifftshift(ifft(ifftshift(fftshift(fft(fftshift(retrievedPulse))).*exp(-1i.*omegas'.*tau))));
+            [~, centerPulse] = max(abs(overlapPulse).^2);
+            overlapPulse = overlapPulse./overlapPulse(centerPulse);
+            shiftedIntensity = abs(overlapPulse).^2;
+    
+            shiftedOverlap = trapz(abs(shiftedIntensity-intensity));
+            
+            if (shiftedOverlap < bestOverlap)
+                bestOverlap = shiftedOverlap;
+                bestTau = tau;
+            end
+            
+        end
         
-        % smooth out the pulse
+        retrievedPulse = ifftshift(ifft(ifftshift(fftshift(fft(fftshift(retrievedPulse))).*exp(-1i.*omegas'.*bestTau))));
+
+        % save pulse to file
         retrievedIntensity = abs(retrievedPulse).^2;
         retrievedPhase = angle(retrievedPulse);
         retrievedSPulse = fftshift(fft(fftshift(retrievedPulse)));
@@ -132,16 +119,6 @@ else
         retrievedSPhase = angle(retrievedSPulse);
         retrievedIntensity = abs(retrievedIntensity/max(retrievedIntensity));
         retrievedSpectrum = abs(retrievedSpectrum/max(retrievedSpectrum));
-
-        % set max intensity at at zero and zero phase at max phase
-        [~, maxIntensity] = max(retrievedIntensity);
-        retrievedIntensity = circshift(retrievedIntensity, length(delays)/2-maxIntensity);
-        retrievedPhase = circshift(retrievedPhase, length(delays)/2-maxIntensity);
-        delays = delays - delays(length(delays)/2);
-        retrievedPhase = unwrap(retrievedPhase);
-        width = 0.05*length(retrievedPhase);
-        temp = retrievedPhase(round((length(retrievedPhase)-width)/2):round((length(retrievedPhase)+width)/2));
-        retrievedPhase = retrievedPhase - max(temp);
 
         % save pulse to file
         outputFile = [delays' retrievedIntensity retrievedPhase 1000*omegas' retrievedSpectrum retrievedSPhase finalError*ones(length(delays),1)];
@@ -157,10 +134,32 @@ else
 
         % plotting results of multiple FROG runs
         file = dlmread(['../../output/bootstrap/' num2str(n) '.txt']);
+        
+        % maximizing phase overlap
+        bootstrapPhase = file(:,3);
+        bootstrapPhase(intensity < 0.1) = [];
+        mainPhase = phase;
+        mainPhase(intensity < 0.1) = [];
+        
+        bestOverlap = 1000;
+        bestConst = 0;
+        for const = -1:0.005:1
+            
+            shiftedPhase = bootstrapPhase + const;
+            
+            shiftedOverlap = trapz(abs(shiftedPhase - mainPhase));
+            
+            if (shiftedOverlap < bestOverlap)
+                bestOverlap = shiftedOverlap;
+                bestConst = const;
+            end
+            
+        end
+        
         subplot(2,2,1)
-        plot(file(:,1),file(:,2)*pi)
+        plot(file(:,1), file(:,2)*pi)
         hold on
-        plot(file(:,1), file(:,3)+pi/2)
+        plot(file(:,1), file(:,3) + bestConst + pi/2)
         xlim([-500 500]);
         ylim([-0.2 3.5]);
         title('Bootstrap in time');
@@ -178,15 +177,15 @@ else
 
         % collecting data for calculating errors
         intensities = [intensities file(:,2)];
-        phases = [phases file(:,3)];
+        phases = [phases file(:,3) + bestConst];
 
     end
     
-    % plot average on top of bootstrap
+    % plot main pulse on top of bootstrap
     subplot(2,2,1)
-    plot(delays, intensity*pi, 'r', 'LineWidth', 3);
+    plot(delays, intensity*pi, 'r-*', 'LineWidth', 1);
     hold on
-    plot(delays, phase+pi/2, 'r', 'LineWidth', 3);
+    plot(delays, phase+pi/2, 'r-*', 'LineWidth', 1);
 
     % remove outliers
     mask = [];
@@ -198,7 +197,7 @@ else
     phases(:,mask) = [];
     intensities(:,mask) = [];
     
-    % calculating and plotting errors (bootstrap method)
+    % calculating and plotting errors
     intensityError = std(intensities, 0, 2);
     phaseError = std(phases, 0, 2);
     subplot(2,2,3)
@@ -215,9 +214,7 @@ else
     xlabel('time [fs]');
     ylabel('phase [rad]');
     
-    % display best error
+    % display best error and write to file
     disp(['Minimum error: ' num2str(minError)]);
-    
-    % writing final result to file
     dlmwrite(['../../fullruns/' fileName '.txt'], [delays', intensity, phase, intensityError, phaseError], '\t');
 end
