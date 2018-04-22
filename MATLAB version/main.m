@@ -7,7 +7,7 @@ clear;
 close all; 
 
 % general settings
-fullRun = 1;
+fullRun = 0;
 experimentalFROG = dlmread('../test data/60.txt');
 fileName = 'YAG 60';
 
