@@ -6,10 +6,11 @@ close all;
 reference = 'ref2 test';
 sample = 'YAG 60 test';
 initialGuess = 7.5e-20;
+blankingTreshold = 0.2;
 
 % experimental parameters
 n = 1.8153;     % linear index of refraction
-P = 60;        % average power mW
+P = 60;         % average power mW
 d = 2;          % sample thickness mm
 w = 254;        % beam spot size in um
 R = 1;          % repetition rate in kHz
@@ -20,13 +21,16 @@ errw = 2;       % beam spot size error in um
 errlambda = 2;  % lambda error in nm
 P = P * (1 - ((1-n)/(1+n))^2 ); % power corrected for Fresnel reflection
 
-% read in data from file
-pulseToFit = dlmread(['../../fullruns/' sample '.txt']);
+% read reference pulse from the file
 calibrationPulse = dlmread(['../../reference/' reference '.txt']);
 calibrationPhase = calibrationPulse(:,3);
 calibrationPhaseError = calibrationPulse(:,5);
+
+% read measured pulse from the file
+pulseToFit = dlmread(['../../fullruns/' sample '.txt']);
 time = pulseToFit(:,1);
 intensity = pulseToFit(:,2);
+rawIntensity = intensity;
 phase = pulseToFit(:,3);
 intensityError = pulseToFit(:,4);
 phaseError = pulseToFit(:,5);
@@ -47,6 +51,7 @@ ylabel('normalized intensity');
 subplot(2,2,2)
 errorbar(time, phase, phaseError);
 xlim([-500 500]);
+ylim([-1.5 0.2]);
 title('Phase');
 xlabel('time [fs]');
 ylabel('phase [rad]');
@@ -59,19 +64,18 @@ almostPhaseError = intensityError * ((P*1e-3)/(R*1e3)) * (d*1e-3) * ((2/(lambda*
 fullAlmostPhase = almostPhase;
 fullTime = time;
 
-% cut data to the size of phase vector
-time(isnan(phase)) = [];
-intensity(isnan(phase)) = [];
-almostPhase(isnan(phase)) = [];
-intensityError(isnan(phase)) = [];
-almostPhaseError(isnan(phase)) = [];
-phaseError(isnan(phase)) = [];
-phase(isnan(phase)) = [];
+% blank phase at blanking treshold
+time(rawIntensity < blankingTreshold) = [];
+intensity(rawIntensity < blankingTreshold) = [];
+intensityError(rawIntensity < blankingTreshold) = [];
+almostPhase(rawIntensity < blankingTreshold) = [];
+almostPhaseError(rawIntensity < blankingTreshold) = [];
+phase(rawIntensity < blankingTreshold) = [];
+phaseError(rawIntensity < blankingTreshold) = [];
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ----------------------------------------------------------------------------------------------
 %   ITERATIVE NONLINEAR REGRESSION
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ----------------------------------------------------------------------------------------------
 
 weights = 1./phaseError.^2;
 n2FitFun = @(b, x) b*x;
@@ -111,7 +115,7 @@ end
 n2Model = fitnlm(almostPhase, phase, n2FitFun, initialGuess, 'Weights', weights);
 n2 = n2Model.Coefficients.Estimate(1);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ----------------------------------------------------------------------------------------------
 
 % experimental error
 errExp = n2 * sqrt((errlambda/lambda)^2 + (errd/d)^2 + (errP/P)^2 + 4*(errw/w)^2);
@@ -136,6 +140,7 @@ xlim([-500 500]);
 hold on
 plot(time, phase);
 xlim([-500 500]);
+ylim([0 1]);
 title('Fitted phases');
 xlabel('time [fs]');
 ylabel('phase [rad]');

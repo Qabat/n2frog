@@ -161,7 +161,10 @@ while (stopped == 0)
 		drawnow;
         % print(gcf,'foo.png','-dpng','-r600');         
         % pressing q ends the program
-		if (strcmp(get(mainFigure,'CurrentCharacter'),'q')) close all; break; end
+		if (strcmp(get(mainFigure,'CurrentCharacter'),'q'))
+            close all;
+            break;
+        end
         
     end
     
