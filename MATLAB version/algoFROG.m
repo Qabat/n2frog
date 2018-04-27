@@ -60,7 +60,9 @@ while (stopped == 0)
     retrievedPulse = retrievedPulse./retrievedPulse(centerPulse);
 
     % phase and intensity flip if n2 would come out negative
-    if ((trapz(gradient(gradient(angle(retrievedPulse(abs(retrievedPulse).^2 > 0.1)))))>0) && (finalIterations > maxIterations/5) && (flipPhase  == 1))
+    if ((trapz(gradient(gradient(angle(retrievedPulse((abs(retrievedPulse).^2/max(abs(retrievedPulse).^2)) > 0.3)))))>0) && (finalIterations > maxIterations/5) && (flipPhase  == 1))
+        retrievedPulse = flipud(abs(retrievedPulse)).*exp(-1i*flipud(angle(retrievedPulse)));
+    elseif ((trapz(gradient(gradient(angle(retrievedPulse((abs(retrievedPulse).^2/max(abs(retrievedPulse).^2)) > 0.3)))))<0) && (finalIterations > maxIterations/5) && (flipPhase  == -1))
         retrievedPulse = flipud(abs(retrievedPulse)).*exp(-1i*flipud(angle(retrievedPulse)));
     end
 

@@ -7,22 +7,25 @@ clear;
 close all; 
 
 % general settings
-fullRun = 0;
-experimentalFROG = dlmread('../test data/60.txt');
-fileName = 'YAG 60';
+fullRun = 1;
+sample = 'YAG';
+power = '95';
+experimentalFROG = dlmread(['../../measurements/' sample '/' power '/' power '.txt']);
 
 % set parameters of a trace
 N = 128;
 
-% 0.5, 0.6 for old, 1, 0.4 for new measurements
+% 0.5, 0.7 for old, 1, 0.4 for new measurements
 scaleDelay = 1;
 scaleLambda = 0.4;
-edgeFiltering = 0;
 mirror = 'both';
-flipPhase = 1; % for measuring n2 phase is flipped so the n2 sign is correct
+
+% for measuring n2 phase is flipped so the n2 sign is correct
+% 0 no flipping, 1 flip for positive n2, -1 flip for negative n2
+flipPhase = 1;
 
 % prepare FROG trace for running the algorithm
-[experimentalFROG, header] = denoiseFROG(experimentalFROG, edgeFiltering);
+[experimentalFROG, header] = denoiseFROG(experimentalFROG);
 [experimentalFROG, header] = resampleFROG(experimentalFROG, header, scaleDelay, scaleLambda, N);
 [experimentalFROG, delays, omegas] = switchDomain(experimentalFROG, header, N);
 experimentalFROG = mirrorFROG(experimentalFROG, delays, omegas, mirror);
@@ -33,7 +36,7 @@ maxIterations = 500;
 whichMethod = 0; % 0 for power method, 1 for SVD method
 normalRuns = 30;
 bootstrapRuns = 100;
-outlierTreshold = 8;
+outlierTreshold = 10;
 
 % main thing
 if ~fullRun
@@ -131,75 +134,68 @@ else % normal runs
     phases = [];
     figure('Position',[150 75 1600 900]);
     for n=1:bootstrapRuns
-
+        
         % plotting results of multiple FROG runs
         file = dlmread(['../../output/bootstrap/' num2str(n) '.txt']);
         
-        % maximizing phase overlap
         bootstrapPhase = file(:,3);
         bootstrapPhase(intensity < 0.1) = [];
         mainPhase = phase;
         mainPhase(intensity < 0.1) = [];
         
-        bestOverlap = 1000;
-        bestConst = 0;
-        for const = -1:0.005:1
+        if (mean((bootstrapPhase - mainPhase).^4) < outlierTreshold)
             
-            shiftedPhase = bootstrapPhase + const;
-            
-            shiftedOverlap = trapz(abs(shiftedPhase - mainPhase));
-            
-            if (shiftedOverlap < bestOverlap)
-                bestOverlap = shiftedOverlap;
-                bestConst = const;
+            % maximizing phase overlap
+            bestOverlap = 1000;
+            bestConst = 0;
+            for const = -1:0.005:1
+    
+                shiftedPhase = bootstrapPhase + const;
+    
+                shiftedOverlap = trapz(abs(shiftedPhase - mainPhase));
+    
+                if (shiftedOverlap < bestOverlap)
+                    bestOverlap = shiftedOverlap;
+                    bestConst = const;
+                end
+    
             end
-            
+    
+            subplot(2,2,1)
+            plot(file(:,1), file(:,2)*pi)
+            hold on
+            plot(file(:,1), file(:,3) + bestConst + pi/2)
+            xlim([-500 500]);
+            ylim([-0.2 3.5]);
+            title('Bootstrap in time');
+            xlabel('time [fs]');
+            ylabel('phase [rad]');
+            subplot(2,2,2)
+            plot(file(:,4),file(:,5)*pi)
+            hold on
+            plot(file(:,4), file(:,6)+pi/2)
+            xlim([-30 30]);
+            ylim([-0.2 3.5]);
+            title('Bootstrap in frequency');
+            xlabel('frequency [THz]');
+            ylabel('phase [rad]');
+    
+            % collecting data for calculating errors
+            intensities = [intensities file(:,2)];
+            phases = [phases file(:,3) + bestConst];
         end
         
-        subplot(2,2,1)
-        plot(file(:,1), file(:,2)*pi)
-        hold on
-        plot(file(:,1), file(:,3) + bestConst + pi/2)
-        xlim([-500 500]);
-        ylim([-0.2 3.5]);
-        title('Bootstrap in time');
-        xlabel('time [fs]');
-        ylabel('phase [rad]');
-        subplot(2,2,2)
-        plot(file(:,4),file(:,5)*pi)
-        hold on
-        plot(file(:,4), file(:,6)+pi/2)
-        xlim([-30 30]);
-        ylim([-0.2 3.5]);
-        title('Bootstrap in frequency');
-        xlabel('frequency [THz]');
-        ylabel('phase [rad]');
-
-        % collecting data for calculating errors
-        intensities = [intensities file(:,2)];
-        phases = [phases file(:,3) + bestConst];
-
     end
     
-    % plot main pulse on top of bootstrap
+    % calculating bootstrap errors
+    intensityError = std(intensities, 0, 2);
+    phaseError = std(phases, 0, 2);
+    
+    % plots
     subplot(2,2,1)
     plot(delays, intensity*pi, 'r-*', 'LineWidth', 1);
     hold on
     plot(delays, phase+pi/2, 'r-*', 'LineWidth', 1);
-
-    % remove outliers
-    mask = [];
-    for n=1:bootstrapRuns
-        if (sqrt(mean((phases(:,n) - mean(phases, 2)).^2)) > outlierTreshold)
-            mask = [mask n];
-        end
-    end
-    phases(:,mask) = [];
-    intensities(:,mask) = [];
-    
-    % calculating and plotting errors
-    intensityError = std(intensities, 0, 2);
-    phaseError = std(phases, 0, 2);
     subplot(2,2,3)
     errorbar(delays, intensity, intensityError);
     xlim([-500 500]);
@@ -216,5 +212,6 @@ else % normal runs
     
     % display best error and write to file
     disp(['Minimum error: ' num2str(minError)]);
-    dlmwrite(['../../fullruns/' fileName '.txt'], [delays', intensity, phase, intensityError, phaseError], '\t');
+    disp(['Bootstrap runs: ' num2str(size(phases,2))]);
+    dlmwrite(['../../fullruns/' sample '/' sample ' ' power '.txt'], [delays', intensity, phase, intensityError, phaseError], '\t');
 end
