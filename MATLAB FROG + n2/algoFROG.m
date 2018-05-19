@@ -60,9 +60,9 @@ while (stopped == 0)
     retrievedPulse = retrievedPulse./retrievedPulse(centerPulse);
 
     % phase and intensity flip if n2 would come out negative
-    if ((trapz(gradient(gradient(angle(retrievedPulse((abs(retrievedPulse).^2/max(abs(retrievedPulse).^2)) > 0.3)))))>0) && (finalIterations > maxIterations/5) && (flipPhase  == 1))
+    if ((trapz(gradient(gradient(angle(retrievedPulse((abs(retrievedPulse).^2/max(abs(retrievedPulse).^2)) > 0.1)))))>0) && (finalIterations > maxIterations/10) && (flipPhase  == 1))
         retrievedPulse = flipud(abs(retrievedPulse)).*exp(-1i*flipud(angle(retrievedPulse)));
-    elseif ((trapz(gradient(gradient(angle(retrievedPulse((abs(retrievedPulse).^2/max(abs(retrievedPulse).^2)) > 0.3)))))<0) && (finalIterations > maxIterations/5) && (flipPhase  == -1))
+    elseif ((trapz(gradient(gradient(angle(retrievedPulse((abs(retrievedPulse).^2/max(abs(retrievedPulse).^2)) > 0.1)))))<0) && (finalIterations > maxIterations/10) && (flipPhase  == -1))
         retrievedPulse = flipud(abs(retrievedPulse)).*exp(-1i*flipud(angle(retrievedPulse)));
     end
 
@@ -97,7 +97,7 @@ while (stopped == 0)
         if stopped == 1
             disp(['Best error: ' num2str(rmsError)]);
         end
-        close all;
+        close all; 
     end
     
     % draw the plots
@@ -130,7 +130,7 @@ while (stopped == 0)
         h = pcolor(delays, 1000*omegas, sqrt(originalFROG)-sqrt(retrievedFROG));
         set(h, 'EdgeColor', 'none');
         caxis([0.01 0.1])
-		title('Difference between FROG traces');
+		title('Difference between FROG traces x10');
 		xlabel('Delay [fs]');
 		ylabel('Signal frequency [THz]');
         pbaspect([1 1 1])
