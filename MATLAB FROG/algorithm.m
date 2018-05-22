@@ -1,9 +1,9 @@
-%   ------------------------------------------------------------
-%   algoFROG runs PCGPA algorithm for retrieving
-%   the ultrashort pulse from measured FROG trace.
-%   ------------------------------------------------------------
+%   ------------------------------------------------------------------------
+%   This function runs Principal Components Generalized Projections
+%   algorithm for retrieving the ultrashort pulse from measured FROG trace.
+%   ------------------------------------------------------------------------
 
-function [retrievedPulse, retrievedFROG, rmsError, finalIterations] = algoFROG(originalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap)
+function [retrievedPulse, retrievedFROG, rmsError, finalIterations] = algorithm(originalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap)
 
 % get trace dimensions
 N = size(originalFROG, 1);
@@ -129,8 +129,8 @@ while (stopped == 0)
         subplot(2,3,3)
         h = pcolor(delays, 1000*omegas, sqrt(originalFROG)-sqrt(retrievedFROG));
         set(h, 'EdgeColor', 'none');
-        caxis([0.01 0.1])
-		title('Difference between FROG traces x10');
+        caxis([0.01 1])
+		title('Difference between FROG traces');
 		xlabel('Delay [fs]');
 		ylabel('Signal frequency [THz]');
         pbaspect([1 1 1])

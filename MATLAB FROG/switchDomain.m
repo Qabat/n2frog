@@ -1,6 +1,6 @@
 %   --------------------------------------------------------------
-%   switchDomain converts the trace
-%   from wavelength domain to frequency domain
+%   This function converts the trace
+%   from wavelength domain to frequency domain.
 %   --------------------------------------------------------------
 
 function [omegaFROG, newDelay, newOmega] = switchDomain(lambdaFROG, header, N)

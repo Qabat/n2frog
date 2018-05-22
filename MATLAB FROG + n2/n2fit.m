@@ -158,12 +158,12 @@ b = n2Model.Coefficients.Estimate(3);
 %   ----------------------------------------------------------------------------------------------
 
 % experimental error
-errExp = 0;
+% errExp = 0;
 % errExp = n2 * sqrt((errlambda/lambda)^2 + (errd/d)^2 + (errP/P)^2 + 4*(errw/w)^2);
 % fitting error
 errFit = n2Model.Coefficients.SE(1);
 % total error
-errn2 = sqrt(errExp^2 + errFit^2);
+% errn2 = sqrt(errExp^2 + errFit^2);
 
 % adding linear and const for plotting
 phase = phase - a*time*1e-2 - b/10;
@@ -203,10 +203,10 @@ ylabel('phase [rad]');
 % showing results on the console
 disp(['sample: ' sample]);
 disp(['n2: ' num2str(n2)]);
-disp(['n2error: ' num2str(errn2)]);
+disp(['n2error: ' num2str(errFit)]);
 
 % saving to file
 time = [time; NaN([length(fullTime)-length(time), 1])];
 phase = [phase; NaN([length(fullAlmostPhase)-length(phase), 1])];
-dlmwrite(['../../fits/' sample ' ' num2str(0.7152*P) ' ' num2str(n2) ' ' num2str(errn2) '.txt'], [fullTime, fullAlmostPhase, fullPhase], '\t');
+dlmwrite(['../../fits/' sample ' ' num2str(0.7152*P) ' ' num2str(n2) ' ' num2str(errFit) '.txt'], [fullTime, fullAlmostPhase, fullPhase], '\t');
 % print(gcf,'-dpng','-r600',['../../fits/' sample ' ' num2str(P) ' ' num2str(n2) ' ' num2str(errn2) '.png'])

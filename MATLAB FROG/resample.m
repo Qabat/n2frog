@@ -1,9 +1,9 @@
 %   --------------------------------------------------------------
-%   resampleFROG interpolates the trace to new size
-%   rescaling delay and lambda spacing
+%   This function interpolates the FROG trace to new size
+%   rescaling delay and lambda spacing.
 %   --------------------------------------------------------------
 
-function [interpedFROG, header] = resampleFROG(filteredFROG, header, scaleDelay, scaleLambda, N)
+function [interpedFROG, header] = resample(filteredFROG, header, scaleDelay, scaleLambda, N)
 
 % read in parameters of spectrogram
 lenDelay = header(1);

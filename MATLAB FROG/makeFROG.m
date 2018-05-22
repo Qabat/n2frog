@@ -1,6 +1,6 @@
-%   ------------------------------------------------------------
-%   makeFROG calculates FROG trace from given electricField
-%   ------------------------------------------------------------
+%   --------------------------------------------------------------
+%   This function calculates FROG trace from given electricField.
+%   --------------------------------------------------------------
 
 function [intensityFROG, electricFROG] = makeFROG(inputPulse)
 

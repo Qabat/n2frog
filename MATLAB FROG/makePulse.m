@@ -1,7 +1,7 @@
-%   --------------------------------------------------------------
-%   makePulse calculates the outputPulse from given electricField
-%   using either Power Method or Singular Value Decomposition
-%   --------------------------------------------------------------
+%   ------------------------------------------------------------------
+%   This function calculates the outputPulse from given electricField
+%   using either Power Method or Singular Value Decomposition.
+%   ------------------------------------------------------------------
 
 function outputPulse = makePulse(electricFROG, lastPulse, whichMethod)
 

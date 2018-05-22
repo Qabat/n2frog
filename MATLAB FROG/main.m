@@ -1,57 +1,61 @@
 %   ------------------------------------------------------------
-%   Main program for running FROG algorithm multiple times.
+%   Main program
+%   Runs SHG FROG PCGPA multiple times selecting best result.
+%   After that runs 100 times with bootstrap to estimate error.
 %   ------------------------------------------------------------
 
 clc;
 clear;
 close all; 
+set(0,'DefaultAxesFontSize',12)
 
 % general settings 
-fullRun = 0;
-sample = 'CaF2';
-power = 150;
+fullRun = 1;
+fileName = 'FROG';
+experimentalFROG = dlmread([fileName '.txt']);
 
-experimentalFROG = dlmread(['../../measurements/' sample '/' num2str(power) '/' num2str(power) '.txt']);
-
-% set parameters of a trace
+% set size of a trace
 N = 128;
 
-% 0.5, 0.7 for old, 1, 0.4 for new measurements
+% trace rescaling parameters
 scaleDelay = 1;
-scaleLambda = 0.3;
-mirror = 'both';
+scaleLambda = 0.4;
 
-% for measuring n2 phase is flipped so the n2 sign is correct
-% 0 no flipping, 1 flip for positive n2, -1 flip for negative n2
+% symmetrizing trace and flipping phase sign if known
+mirror = 'both';
 flipPhase = 1;
 
 % prepare FROG trace for running the algorithm
-[experimentalFROG, header] = denoiseFROG(experimentalFROG);
-[experimentalFROG, header] = resampleFROG(experimentalFROG, header, scaleDelay, scaleLambda, N);
+[experimentalFROG, header] = denoise(experimentalFROG);
+[experimentalFROG, header] = resample(experimentalFROG, header, scaleDelay, scaleLambda, N);
 [experimentalFROG, delays, omegas] = switchDomain(experimentalFROG, header, N);
-experimentalFROG = mirrorFROG(experimentalFROG, delays, omegas, mirror);
+experimentalFROG = symmetrize(experimentalFROG, delays, omegas, mirror);
 
 % input parameters for FROG algorithm
 errorTolerance = 1e-3;
-maxIterations = 500;
+maxIterations = 200;
 whichMethod = 0; % 0 for power method, 1 for SVD method
-normalRuns = 30;
-bootstrapRuns = 100;
-outlierTreshold = 10;
+normalRuns = 3; % having here about 10 runs is usually enough
+bootstrapRuns = 100; % should be around 100 bootstrap runs
+outlierTreshold = 10; % for cutting out failed bootstrap runs
 
 % main thing
 if ~fullRun
+    
+    % test run
     hidePlots = 0;
     useBootstrap = 0;
-	[retrievedPulse, retrievedFROG, finalError, finalIterations] = algoFROG(experimentalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap);
+	[retrievedPulse, retrievedFROG, finalError, finalIterations] = algorithm(experimentalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap);
     retrievedIntensity = abs(retrievedPulse).^2;
     retrievedPhase = angle(retrievedPulse);
     retrievedSPulse = fftshift(fft(fftshift(retrievedPulse)));
     retrievedSpectrum = abs(retrievedSPulse).^2;
     retrievedSPhase = angle(retrievedSPulse);
     outputFile = [delays' retrievedIntensity retrievedPhase 1000*omegas' retrievedSpectrum retrievedSPhase finalError*ones(length(delays),1)];
-    dlmwrite('../../output/testrun.txt', outputFile, '\t');
-else % normal runs
+    dlmwrite('output/testrun.txt', outputFile, '\t');
+    
+else
+    
 	hidePlots = 1;
     useBootstrap = 0;
     intensities = [];
@@ -62,7 +66,7 @@ else % normal runs
         disp(['Current run: ' num2str(n)]);
         
         % main algorithm
-        [retrievedPulse, retrievedFROG, finalError, finalIterations] = algoFROG(experimentalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap);
+        [retrievedPulse, retrievedFROG, finalError, finalIterations] = algorithm(experimentalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap);
 
         % save pulse to file
         retrievedIntensity = abs(retrievedPulse).^2;
@@ -73,7 +77,7 @@ else % normal runs
         retrievedIntensity = abs(retrievedIntensity/max(retrievedIntensity));
         retrievedSpectrum = abs(retrievedSpectrum/max(retrievedSpectrum));      
         outputFile = [delays' retrievedIntensity retrievedPhase 1000*omegas' retrievedSpectrum retrievedSPhase finalError*ones(length(delays),1)];
-        dlmwrite(['../../output/normal/' num2str(n) '.txt'], outputFile, '\t');
+        dlmwrite(['output/normal/' num2str(n) '.txt'], outputFile, '\t');
 
         intensities = [intensities retrievedIntensity];
         phases = [phases retrievedPhase];
@@ -95,7 +99,7 @@ else % normal runs
         disp(['Current run: ' num2str(n) 'b']);
         
         % main algorithm
-        [retrievedPulse, retrievedFROG, finalError, finalIterations] = algoFROG(experimentalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap);                
+        [retrievedPulse, retrievedFROG, finalError, finalIterations] = algorithm(experimentalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap);                
 
         % maximizing temporal pulse overlap
         bestOverlap = 1000;
@@ -129,7 +133,7 @@ else % normal runs
 
         % save pulse to file
         outputFile = [delays' retrievedIntensity retrievedPhase 1000*omegas' retrievedSpectrum retrievedSPhase finalError*ones(length(delays),1)];
-        dlmwrite(['../../output/bootstrap/' num2str(n) '.txt'], outputFile, '\t');
+        dlmwrite(['output/bootstrap/' num2str(n) '.txt'], outputFile, '\t');
 
     end
 
@@ -140,7 +144,7 @@ else % normal runs
     for n=1:bootstrapRuns
         
         % plotting results of multiple FROG runs
-        file = dlmread(['../../output/bootstrap/' num2str(n) '.txt']);
+        file = dlmread(['output/bootstrap/' num2str(n) '.txt']);
         
         bootstrapPhase = file(:,3);
         bootstrapPhase(intensity < 0.1) = [];
@@ -171,7 +175,7 @@ else % normal runs
             plot(file(:,1), file(:,3) + bestConst + pi/2)
             xlim([-500 500]);
             ylim([-0.2 3.5]);
-            title('Bootstrap in time');
+            title('Retrieved pulse and bootstrap runs');
             xlabel('time [fs]');
             ylabel('phase [rad]');
             subplot(2,3,4)
@@ -207,9 +211,9 @@ else % normal runs
     errorbar(delays, phase+pi/2, phaseError);
     xlim([-500 500]);
     ylim([-0.2 3.5]);
-    title('Pulse with error bars');
+    title('Retrieved pulse with error bars');
     xlabel('time [fs]');
-    ylabel('intensity');
+    ylabel('phase [rad]');
     subplot(2,3,5)
     colormap([1 1 1; jet(64)]);
     brighten(0.4);
@@ -226,7 +230,7 @@ else % normal runs
     h = pcolor(delays, 1000*omegas, sqrt(experimentalFROG)-sqrt(bestFROG));
     caxis([0.01 1])
     set(h, 'EdgeColor', 'none');
-    title('Best retrieved FROG trace');
+    title('Difference between FROG traces');
     xlabel('Delay [fs]');
     ylabel('Signal frequency [THz]');
     pbaspect([1 1 1])
@@ -234,5 +238,5 @@ else % normal runs
     % display best error and write to file
     disp(['Minimum error: ' num2str(minError)]);
     disp(['Bootstrap runs: ' num2str(size(phases,2))]);
-    dlmwrite(['../../fullruns/' sample '/' sample ' ' num2str(power) '.txt'], [delays', intensity, phase, intensityError, phaseError], '\t');
+    dlmwrite(['output/' fileName '.txt'], [delays', intensity, phase, intensityError, phaseError], '\t');
 end

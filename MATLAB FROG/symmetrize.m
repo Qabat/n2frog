@@ -1,4 +1,9 @@
-function symmetrizedFROG = mirrorFROG(rawFROG, delays, omegas, mirror)
+%   ------------------------------------------------------------------------
+%   This function makes FROG trace symmetric.
+%   Properly measured SHG FROG should be symmetric by itself.
+%   ------------------------------------------------------------------------
+
+function symmetrizedFROG = symmetrize(rawFROG, delays, omegas, mirror)
 
 N = size(rawFROG, 1);
 temporalShift = (delays(2)-delays(1))/2;
