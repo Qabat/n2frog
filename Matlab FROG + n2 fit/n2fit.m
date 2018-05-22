@@ -2,13 +2,15 @@ clc;
 clear;
 close all; 
 
+set(0,'DefaultAxesFontSize',20)
+
 % experimental parameters
-sample = 'YAG';
-P = 95;                             % average power mW
-n = 1.8153;                         % linear index of refraction
-initialGuess = 7;                   % starting value for fitting algorithm
-reference = 'ref2';                 % which reference pulse to use
-d = 2;                              % sample thickness mm
+sample = 'FS';
+P = 160;                             % average power mW
+n = 1.45;                         % linear index of refraction
+initialGuess = 2.5;                 % starting value for fitting algorithm
+reference = 'ref1';                 % which reference pulse to use
+d = 3;                              % sample thickness mm
 w = 254;                            % beam spot size in um
 R = 1;                              % repetition rate in kHz
 lambda = 1028;                      % wavelength in nm
@@ -17,7 +19,8 @@ errd = 0.02*d;                      % sample thickness error in mm
 errw = 3;                           % beam spot size error in um
 errlambda = 2;                      % lambda error in nm
 Pf = P * (1 - ((1-n)/(1+n))^2 );    % power corrected for Fresnel reflection
-blankingTreshold = 0.2;             % phase blanking treshold for fitting
+blankingTreshold = 0.15;             % phase blanking treshold for fitting
+% Pf = 0.7152 * Pf;              % correction for ND filter for YVO
 
 % read reference pulse from the file
 calibrationPulse = dlmread(['../../reference/' reference '.txt']);
@@ -38,38 +41,68 @@ phaseError = pulseToFit(:,5);
 % plotting inpute and reference pulse intensity
 figure('Position',[450 90 1200 700]);
 subplot(2,2,1)
-errorbar(time, intensity, intensityError);
+errorbar(time, intensity, intensityError, 'LineWidth', 2);
 hold on
-errorbar(time, calibrationIntensity, calibrationIntensityError);
+errorbar(time, calibrationIntensity, calibrationIntensityError, 'LineWidth', 2);
 xlim([-500 500]);
 ylim([0 1.2]);
-title('Intensity');
+title('Intensity comparison');
 xlabel('time [fs]');
 ylabel('normalized intensity');
+legend('measured','reference');
+
+% chi2
+% diffIntensity = intensity - calibrationIntensity;
+% T = sum((diffIntensity./intensityError).^2)
+% k = length(diffIntensity)
+% display(T/k);
+
+% chi p-value
+% diffIntensity = intensity - calibrationIntensity;
+% diffError = intensityError.^2 + calibrationIntensityError.^2);
+% T = sum((diffIntensity./diffError).^2)
+% k = length(diffIntensity)
+% pValue = chi2cdf(T, k-1)
+
+% geometric
+% BDMIntensity = intensity / sum(intensity);
+% BDMcalibrationIntensity = calibrationIntensity / sum(calibrationIntensity);
+% TBDM = sqrt(sum((intensity .* calibrationIntensity)/(sum(intensity)*sum(calibrationIntensity))))
+% k = length(BDMIntensity)
+% pValue = chi2cdf(TBDM, k-1)
 
 % plotting input, reference and difference phases
 subplot(2,2,2)
-errorbar(time, phase, phaseError);
+errorbar(time, phase, phaseError, 'LineWidth', 2);
 hold on
-errorbar(time, calibrationPhase, calibrationPhaseError);
+errorbar(time, calibrationPhase, calibrationPhaseError, 'LineWidth', 2);
 
 % subtract calibration phase
 phase = phase - calibrationPhase;
+fullPhase = phase;
 phaseError = sqrt(phaseError.^2 + calibrationPhaseError.^2);
-
-errorbar(time, phase, phaseError);
+errorbar(time, phase, phaseError, 'LineWidth', 2);
 hold off
 xlim([-500 500]);
 ylim([-2 0.5]);
-title('Phase');
+title('Reference phase subtraction');
 xlabel('time [fs]');
 ylabel('phase [rad]');
+legend('measured', 'reference', 'SPM-induced', 'Location', 'northeast');
 
 % calculating "almostPhase" from intensity profile, theoretical phase with n2 = 1
 intensityError = intensityError/trapz(1e-15*time, intensity);
 intensity = intensity/trapz(1e-15*time, intensity);
+
+% !!!!!!!!!!!!!!!!!!!
 almostPhase = intensity * ((Pf*1e-3)/(R*1e3)) * (d*1e-3) * ((2/(lambda*1e-9))/(w*1e-6)^2);
-almostPhaseError = intensityError * ((Pf*1e-3)/(R*1e3)) * (d*1e-3) * ((2/(lambda*1e-9))/(w*1e-6)^2);
+
+almostPhaseError = almostPhase .* sqrt((intensityError./intensity).^2 + (errlambda/lambda)^2 + (errd/d)^2 + (errP/P)^2 + 4*(errw/w)^2); 
+
+% old version (correct but without other errors than intensity)
+% almostPhaseError = intensityError * ((Pf*1e-3)/(R*1e3)) * (d*1e-3) * ((2/(lambda*1e-9))/(w*1e-6)^2);
+% !!!!!!!!!!!!!!!!!!!
+
 fullAlmostPhase = almostPhase;
 fullTime = time;
 
@@ -84,6 +117,7 @@ phaseError(rawIntensity < blankingTreshold) = [];
 
 % initially set both to max = 0
 almostPhase = almostPhase - max(almostPhase);
+fullPhase = fullPhase - max(phase);
 phase = phase - max(phase);
 
 %   ----------------------------------------------------------------------------------------------
@@ -97,6 +131,16 @@ almostPhaseError = almostPhaseError*1e-20;
 fullAlmostPhase = fullAlmostPhase*1e-20;
 
 weights = 1./phaseError.^2;
+
+% fffFun = @(b, x) b(1).*x(:,1) + b(2).*x(:,2)
+% n2Model = fitnlm([almostPhase ones(size(time))*1e-1], phase, fffFun, [initialGuess 1e-2], 'Weights', weights);
+% n2 = n2Model.Coefficients.Estimate(1);
+% 
+% % a = n2Model.Coefficients.Estimate(2);
+% b = n2Model.Coefficients.Estimate(2);
+% a = 0;
+% % b = 0;
+
 n2Model = fitnlm([almostPhase time*1e-2 ones(size(time))*1e-1], phase, fitFun, [initialGuess 1e-2 1e-2], 'Weights', weights);
 n2 = n2Model.Coefficients.Estimate(1);
 
@@ -114,30 +158,42 @@ b = n2Model.Coefficients.Estimate(3);
 %   ----------------------------------------------------------------------------------------------
 
 % experimental error
-errExp = n2 * sqrt((errlambda/lambda)^2 + (errd/d)^2 + (errP/P)^2 + 4*(errw/w)^2);
+% errExp = 0;
+% errExp = n2 * sqrt((errlambda/lambda)^2 + (errd/d)^2 + (errP/P)^2 + 4*(errw/w)^2);
 % fitting error
 errFit = n2Model.Coefficients.SE(1);
 % total error
-errn2 = sqrt(errExp^2 + errFit^2);
+% errn2 = sqrt(errExp^2 + errFit^2);
 
 % adding linear and const for plotting
 phase = phase - a*time*1e-2 - b/10;
+fullPhase = fullPhase - a*fullTime*1e-2 - b/10;
 
 % plotting fit
 subplot(2,2,3);
-errorbar(almostPhase, phase, phaseError, phaseError, almostPhaseError, almostPhaseError,'o')
+errorbar(almostPhase*1e20, phase, phaseError, phaseError, almostPhaseError*1e20, almostPhaseError*1e20, 'o', 'LineWidth', 1)
 hold on
-plot(almostPhase, n2*almostPhase, 'LineWidth', 2);
-title('Fitting phases to each other');
-xlabel('almost phase [rad*W/cm^2]');
+plot(almostPhase*1e20, n2*almostPhase, 'LineWidth', 3);
+title('Weighted least squares regression');
+xlabel(' 2\pidI(t)/\lambda [radW/cm^{2}] ');
 ylabel('phase [rad]');
+legend('experiment', 'best fit', 'Location', 'southeast');
+% box on;
+% xlim([-5 0.5]*1e19);
+ax = get(gca);
+ax.XAxis.Exponent = 20;
+
+% title('$\hat{\psi}$','Interpreter','latex')
+
 subplot(2,2,4)
-phase = phase + max(n2 * fullAlmostPhase);
 fullAlmostPhase = n2 * fullAlmostPhase;
-plot(fullTime, fullAlmostPhase, 'LineWidth', 2);
+phase = phase + max(fullAlmostPhase);
+fullPhase = fullPhase + max(fullAlmostPhase);
+plot(fullTime, fullAlmostPhase, 'LineWidth', 3);
 xlim([-500 500]);
 hold on
-plot(time, phase, 'LineWidth', 2);
+plot(time, phase, 'LineWidth', 3);
+legend('intensity', 'phase', 'Location', 'northeast');
 xlim([-500 500]);
 ylim([0 0.2 + max(fullAlmostPhase)]);
 title('Fitted phases');
@@ -147,9 +203,10 @@ ylabel('phase [rad]');
 % showing results on the console
 disp(['sample: ' sample]);
 disp(['n2: ' num2str(n2)]);
-disp(['n2error: ' num2str(errn2)]);
+disp(['n2error: ' num2str(errFit)]);
 
 % saving to file
 time = [time; NaN([length(fullTime)-length(time), 1])];
 phase = [phase; NaN([length(fullAlmostPhase)-length(phase), 1])];
-dlmwrite(['../../fits/' sample ' ' num2str(P) ' ' num2str(n2) ' ' num2str(errn2) '.txt'], [fullTime, fullAlmostPhase, time, phase], '\t');
+dlmwrite(['../../fits/' sample ' ' num2str(0.7152*P) ' ' num2str(n2) ' ' num2str(errFit) '.txt'], [fullTime, fullAlmostPhase, fullPhase], '\t');
+% print(gcf,'-dpng','-r600',['../../fits/' sample ' ' num2str(P) ' ' num2str(n2) ' ' num2str(errn2) '.png'])

@@ -1,9 +1,9 @@
-%   ------------------------------------------------------------
-%   algoFROG runs PCGPA algorithm for retrieving
-%   the ultrashort pulse from measured FROG trace.
-%   ------------------------------------------------------------
+%   ------------------------------------------------------------------------
+%   This function runs Principal Components Generalized Projections
+%   algorithm for retrieving the ultrashort pulse from measured FROG trace.
+%   ------------------------------------------------------------------------
 
-function [retrievedPulse, retrievedFROG, rmsError, finalIterations] = algoFROG(originalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap)
+function [retrievedPulse, retrievedFROG, rmsError, finalIterations] = algorithm(originalFROG, errorTolerance, maxIterations, delays, omegas, flipPhase, whichMethod, hidePlots, useBootstrap)
 
 % get trace dimensions
 N = size(originalFROG, 1);
@@ -60,9 +60,9 @@ while (stopped == 0)
     retrievedPulse = retrievedPulse./retrievedPulse(centerPulse);
 
     % phase and intensity flip if n2 would come out negative
-    if ((trapz(gradient(gradient(angle(retrievedPulse((abs(retrievedPulse).^2/max(abs(retrievedPulse).^2)) > 0.3)))))>0) && (finalIterations > maxIterations/5) && (flipPhase  == 1))
+    if ((trapz(gradient(gradient(angle(retrievedPulse((abs(retrievedPulse).^2/max(abs(retrievedPulse).^2)) > 0.1)))))>0) && (finalIterations > maxIterations/10) && (flipPhase  == 1))
         retrievedPulse = flipud(abs(retrievedPulse)).*exp(-1i*flipud(angle(retrievedPulse)));
-    elseif ((trapz(gradient(gradient(angle(retrievedPulse((abs(retrievedPulse).^2/max(abs(retrievedPulse).^2)) > 0.3)))))<0) && (finalIterations > maxIterations/5) && (flipPhase  == -1))
+    elseif ((trapz(gradient(gradient(angle(retrievedPulse((abs(retrievedPulse).^2/max(abs(retrievedPulse).^2)) > 0.1)))))<0) && (finalIterations > maxIterations/10) && (flipPhase  == -1))
         retrievedPulse = flipud(abs(retrievedPulse)).*exp(-1i*flipud(angle(retrievedPulse)));
     end
 
@@ -97,7 +97,7 @@ while (stopped == 0)
         if stopped == 1
             disp(['Best error: ' num2str(rmsError)]);
         end
-        close all;
+        close all; 
     end
     
     % draw the plots
@@ -129,7 +129,7 @@ while (stopped == 0)
         subplot(2,3,3)
         h = pcolor(delays, 1000*omegas, sqrt(originalFROG)-sqrt(retrievedFROG));
         set(h, 'EdgeColor', 'none');
-        caxis([0.01 0.1])
+        caxis([0.01 1])
 		title('Difference between FROG traces');
 		xlabel('Delay [fs]');
 		ylabel('Signal frequency [THz]');

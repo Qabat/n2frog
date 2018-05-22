@@ -6,18 +6,21 @@ clc;
 clear;
 close all; 
 
-% general settings
-fullRun = 1;
-sample = 'YAG';
-power = '95';
-experimentalFROG = dlmread(['../../measurements/' sample '/' power '/' power '.txt']);
+% general settings 
+fullRun = 0;
+sample = 'test';
+powers = [60];
+
+for power = powers
+
+experimentalFROG = dlmread(['../../measurements/' sample '/' num2str(power) '/' num2str(power) ' mW.txt']);
 
 % set parameters of a trace
 N = 128;
 
 % 0.5, 0.7 for old, 1, 0.4 for new measurements
-scaleDelay = 1;
-scaleLambda = 0.4;
+scaleDelay = 0.5;
+scaleLambda = 0.7;
 mirror = 'both';
 
 % for measuring n2 phase is flipped so the n2 sign is correct
@@ -50,6 +53,7 @@ if ~fullRun
     retrievedSPhase = angle(retrievedSPulse);
     outputFile = [delays' retrievedIntensity retrievedPhase 1000*omegas' retrievedSpectrum retrievedSPhase finalError*ones(length(delays),1)];
     dlmwrite('../../output/testrun.txt', outputFile, '\t');
+    print(gcf,'-dpng','-r600', '../../output/testrun.png')
 else % normal runs
 	hidePlots = 1;
     useBootstrap = 0;
@@ -83,6 +87,9 @@ else % normal runs
     [minError, minIndex] = min(errors);
     intensity = intensities(:, minIndex);
     phase = phases(:, minIndex);    
+    bestPulse = sqrt(intensity).*exp(1i*phase);
+    [bestFROG, ~] = makeFROG(bestPulse);
+    bestFROG = bestFROG/max(max(bestFROG));
 
     % bootstrap runs
     useBootstrap = 1;
@@ -142,7 +149,7 @@ else % normal runs
         bootstrapPhase(intensity < 0.1) = [];
         mainPhase = phase;
         mainPhase(intensity < 0.1) = [];
-        
+%         disp(mean((bootstrapPhase - mainPhase).^4));
         if (mean((bootstrapPhase - mainPhase).^4) < outlierTreshold)
             
             % maximizing phase overlap
@@ -170,15 +177,16 @@ else % normal runs
             title('Bootstrap in time');
             xlabel('time [fs]');
             ylabel('phase [rad]');
-            subplot(2,2,2)
-            plot(file(:,4),file(:,5)*pi)
-            hold on
-            plot(file(:,4), file(:,6)+pi/2)
-            xlim([-30 30]);
-            ylim([-0.2 3.5]);
-            title('Bootstrap in frequency');
-            xlabel('frequency [THz]');
-            ylabel('phase [rad]');
+            subplot(2,3,4)
+            colormap([1 1 1; jet(64)]);
+            brighten(0.4);
+            h = pcolor(delays, 1000*omegas, sqrt(experimentalFROG));
+            set(h, 'EdgeColor', 'none');
+            caxis([0.01 1])
+            title('Measured FROG trace');
+            xlabel('Delay [fs]');
+            ylabel('Signal frequency [THz]');
+            pbaspect([1 1 1])
     
             % collecting data for calculating errors
             intensities = [intensities file(:,2)];
@@ -196,22 +204,40 @@ else % normal runs
     plot(delays, intensity*pi, 'r-*', 'LineWidth', 1);
     hold on
     plot(delays, phase+pi/2, 'r-*', 'LineWidth', 1);
-    subplot(2,2,3)
-    errorbar(delays, intensity, intensityError);
+    subplot(2,2,2)
+    errorbar(delays, intensity*pi, intensityError);
+    hold on
+    errorbar(delays, phase+pi/2, phaseError);
     xlim([-500 500]);
-    ylim([-0.2 1.2]);
-    title('Intensity with errors');
+    ylim([-0.2 3.5]);
+    title('Pulse with error bars');
     xlabel('time [fs]');
     ylabel('intensity');
-    subplot(2,2,4)
-    errorbar(delays, phase, phaseError);
-    xlim([-500 500]);
-    title('Phase with errors');
-    xlabel('time [fs]');
-    ylabel('phase [rad]');
-    
+    subplot(2,3,5)
+    colormap([1 1 1; jet(64)]);
+    brighten(0.4);
+    h = pcolor(delays, 1000*omegas, sqrt(bestFROG));
+    set(h, 'EdgeColor', 'none');
+    caxis([0.01 1])
+    title('Best retrieved FROG trace');
+    xlabel('Delay [fs]');
+    ylabel('Signal frequency [THz]');
+    pbaspect([1 1 1])
+    subplot(2,3,6)
+    colormap([1 1 1; jet(64)]);
+    brighten(0.4);
+    h = pcolor(delays, 1000*omegas, sqrt(experimentalFROG)-sqrt(bestFROG));
+    caxis([0.01 1])
+    set(h, 'EdgeColor', 'none');
+    title('Difference between traces');
+    xlabel('Delay [fs]');
+    ylabel('Signal frequency [THz]');
+    pbaspect([1 1 1])
+
     % display best error and write to file
     disp(['Minimum error: ' num2str(minError)]);
     disp(['Bootstrap runs: ' num2str(size(phases,2))]);
-    dlmwrite(['../../fullruns/' sample '/' sample ' ' power '.txt'], [delays', intensity, phase, intensityError, phaseError], '\t');
+    dlmwrite(['../../fullruns/' sample '/' sample ' ' num2str(power) '.txt'], [delays', intensity, phase, intensityError, phaseError], '\t');
+    print(gcf,'-dpng','-r600', ['../../fullruns/' sample '/' sample ' ' num2str(power) '.png'])
+end
 end
