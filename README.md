@@ -1,6 +1,7 @@
 # SHG FROG PCGPA software for measuring nonlinear refractive index
 
 This program calculates n2 of a material via fitting the phase of the pulse propagated through the sample to its intensity.
+Only-FROG version is also available and will be rewritten in Python soonTM.
 
 FROG algorithm is based on:
 
@@ -10,5 +11,3 @@ FROG algorithm is based on:
 - many publications by Rick Trebino, Daniel Kane, Kenneth DeLong, Ziyang Wang and others
 
 Fitting procedure for recovering n2 from SPM-induced phase is based on my engineering thesis and soon to be published paper.
-
-This will be rewritten in Python when I will find time for it.
