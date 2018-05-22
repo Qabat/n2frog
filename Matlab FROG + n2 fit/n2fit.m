@@ -94,15 +94,9 @@ legend('measured', 'reference', 'SPM-induced', 'Location', 'northeast');
 intensityError = intensityError/trapz(1e-15*time, intensity);
 intensity = intensity/trapz(1e-15*time, intensity);
 
-% !!!!!!!!!!!!!!!!!!!
+% error propagation on intensity
 almostPhase = intensity * ((Pf*1e-3)/(R*1e3)) * (d*1e-3) * ((2/(lambda*1e-9))/(w*1e-6)^2);
-
 almostPhaseError = almostPhase .* sqrt((intensityError./intensity).^2 + (errlambda/lambda)^2 + (errd/d)^2 + (errP/P)^2 + 4*(errw/w)^2); 
-
-% old version (correct but without other errors than intensity)
-% almostPhaseError = intensityError * ((Pf*1e-3)/(R*1e3)) * (d*1e-3) * ((2/(lambda*1e-9))/(w*1e-6)^2);
-% !!!!!!!!!!!!!!!!!!!
-
 fullAlmostPhase = almostPhase;
 fullTime = time;
 
@@ -132,15 +126,6 @@ fullAlmostPhase = fullAlmostPhase*1e-20;
 
 weights = 1./phaseError.^2;
 
-% fffFun = @(b, x) b(1).*x(:,1) + b(2).*x(:,2)
-% n2Model = fitnlm([almostPhase ones(size(time))*1e-1], phase, fffFun, [initialGuess 1e-2], 'Weights', weights);
-% n2 = n2Model.Coefficients.Estimate(1);
-% 
-% % a = n2Model.Coefficients.Estimate(2);
-% b = n2Model.Coefficients.Estimate(2);
-% a = 0;
-% % b = 0;
-
 n2Model = fitnlm([almostPhase time*1e-2 ones(size(time))*1e-1], phase, fitFun, [initialGuess 1e-2 1e-2], 'Weights', weights);
 n2 = n2Model.Coefficients.Estimate(1);
 
@@ -154,16 +139,9 @@ n2Model = fitnlm([almostPhase time*1e-2 0.1*ones(size(time))], phase, fitFun, [i
 n2 = n2Model.Coefficients.Estimate(1);
 a = n2Model.Coefficients.Estimate(2);
 b = n2Model.Coefficients.Estimate(3);
+errn2 = n2Model.Coefficients.SE(1);
 
 %   ----------------------------------------------------------------------------------------------
-
-% experimental error
-% errExp = 0;
-% errExp = n2 * sqrt((errlambda/lambda)^2 + (errd/d)^2 + (errP/P)^2 + 4*(errw/w)^2);
-% fitting error
-errFit = n2Model.Coefficients.SE(1);
-% total error
-% errn2 = sqrt(errExp^2 + errFit^2);
 
 % adding linear and const for plotting
 phase = phase - a*time*1e-2 - b/10;
@@ -183,8 +161,6 @@ legend('experiment', 'best fit', 'Location', 'southeast');
 ax = get(gca);
 ax.XAxis.Exponent = 20;
 
-% title('$\hat{\psi}$','Interpreter','latex')
-
 subplot(2,2,4)
 fullAlmostPhase = n2 * fullAlmostPhase;
 phase = phase + max(fullAlmostPhase);
@@ -203,10 +179,10 @@ ylabel('phase [rad]');
 % showing results on the console
 disp(['sample: ' sample]);
 disp(['n2: ' num2str(n2)]);
-disp(['n2error: ' num2str(errFit)]);
+disp(['n2error: ' num2str(errn2)]);
 
 % saving to file
 time = [time; NaN([length(fullTime)-length(time), 1])];
 phase = [phase; NaN([length(fullAlmostPhase)-length(phase), 1])];
-dlmwrite(['../../fits/' sample ' ' num2str(0.7152*P) ' ' num2str(n2) ' ' num2str(errFit) '.txt'], [fullTime, fullAlmostPhase, fullPhase], '\t');
+dlmwrite(['../../fits/' sample ' ' num2str(0.7152*P) ' ' num2str(n2) ' ' num2str(errn2) '.txt'], [fullTime, fullAlmostPhase, fullPhase], '\t');
 % print(gcf,'-dpng','-r600',['../../fits/' sample ' ' num2str(P) ' ' num2str(n2) ' ' num2str(errn2) '.png'])
